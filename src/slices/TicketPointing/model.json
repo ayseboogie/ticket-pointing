@@ -1,0 +1,71 @@
+{
+  "id": "ticket_pointing",
+  "type": "SharedSlice",
+  "name": "TicketPointing",
+  "description": "TicketPointing",
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Default",
+      "imageUrl": "",
+      "primary": {
+        "room_id": {
+          "type": "Text",
+          "config": {
+            "label": "Room ID",
+            "placeholder": "team-alpha"
+          }
+        },
+        "room_title": {
+          "type": "Text",
+          "config": {
+            "label": "Room Title",
+            "placeholder": "Sprint Planning"
+          }
+        },
+        "allow_reveal": {
+          "type": "Boolean",
+          "config": {
+            "label": "Allow Reveal",
+            "default_value": true
+          }
+        },
+        "participants": {
+          "type": "Group",
+          "config": {
+            "label": "Participants",
+            "repeat": true,
+            "fields": {
+              "name": {
+                "type": "Text",
+                "config": {
+                  "label": "Name",
+                  "placeholder": "Jane"
+                }
+              },
+              "avatar_color": {
+                "type": "Select",
+                "config": {
+                  "label": "Avatar Color",
+                  "placeholder": "",
+                  "options": [
+                    "Blue",
+                    "Green",
+                    "Orange",
+                    "Purple",
+                    "Red",
+                    "Teal"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "items": {}
+    }
+  ]
+}

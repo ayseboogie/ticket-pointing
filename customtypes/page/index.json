@@ -71,6 +71,9 @@
             "text_grid_row": {
               "type": "SharedSlice"
             },
+            "ticket_pointing": {
+              "type": "SharedSlice"
+            },
             "contact": {
               "type": "SharedSlice"
             },

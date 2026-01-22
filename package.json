@@ -27,6 +27,7 @@
     "@prismicio/simulator": "^0.1.4",
     "@prismicio/types": "^0.2.9",
     "@react-email/components": "^0.0.33",
+    "@supabase/supabase-js": "^2.91.0",
     "@types/nodemailer": "^6.4.17",
     "@vercel/speed-insights": "^1.2.0",
     "algoliasearch": "^5.20.2",
