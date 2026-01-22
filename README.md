@@ -1,4 +1,4 @@
-# slice-boilerplate
+# ticket-pointing
 
 ```bash
 yarn run dev
@@ -16,4 +16,4 @@ yarn run storybook
 yarn run slicemachine
 ```
 
-# slice-boilerplate
+# ticket-pointing
