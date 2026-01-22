@@ -18,6 +18,8 @@ const RootLayout = async ({
   const layoutConstants = await client.getSingle("layoutconstants");
   const footer = await client.getSingle("footer");
 
+  console.log("navigation", navigation);
+
   return (
     <html lang="en">
       <body>
@@ -41,7 +43,7 @@ const RootLayout = async ({
         <Script
           async
           defer
-          src="https://static.cdn.prismic.io/prismic.js?new=true&repo=slice-boilerplate"
+          src="https://static.cdn.prismic.io/prismic.js?new=true&repo=ticket-pointing"
         />
 
         {/* google recaptcha */}
@@ -52,9 +54,9 @@ const RootLayout = async ({
         />
 
         <Layout
-        // navigation={navigation}
-        // layoutConstants={layoutConstants}
-        // footer={footer}
+          navigation={navigation}
+          layoutConstants={layoutConstants}
+          footer={footer}
         >
           {children}
           {/* vercel speed insights */}
