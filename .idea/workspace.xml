@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="2a056f1b-44a8-4c6f-bcc0-e10b5c04e7c4" name="Changes" comment="">
+<<<<<<< HEAD
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/Stories/CardGridStory/index.stories.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/Stories/CardGridStory/index.stories.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/customtypes/navigation/index.json" beforeDir="false" afterPath="$PROJECT_DIR$/customtypes/navigation/index.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prismicio-types.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/prismicio-types.d.ts" afterDir="false" />
+=======
+      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/Layout/Header/Meta.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/Layout/Header/Meta.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/slicemachine.config.json" beforeDir="false" afterPath="$PROJECT_DIR$/slicemachine.config.json" afterDir="false" />
+>>>>>>> main
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;ayseboogie&quot;
+  }
+}</component>
+  <component name="GitToolBoxStore">
+    <option name="projectConfigVersion" value="5" />
+    <option name="recentBranches">
+      <RecentBranches>
+        <option name="branchesForRepo">
+          <list>
+            <RecentBranchesForRepo>
+              <option name="branches">
+                <list>
+                  <RecentBranch>
+                    <option name="branchName" value="as-link" />
+                    <option name="lastUsedInstant" value="1714748678" />
+                  </RecentBranch>
+                  <RecentBranch>
+                    <option name="branchName" value="main" />
+                    <option name="lastUsedInstant" value="1714748366" />
+                  </RecentBranch>
+                </list>
+              </option>
+              <option name="repositoryRootUrl" value="file://$PROJECT_DIR$" />
+            </RecentBranchesForRepo>
+          </list>
+        </option>
+      </RecentBranches>
+    </option>
+  </component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;git@github.com:ayseboogie/slice-boilerplate.git&quot;,
+    &quot;accountId&quot;: &quot;875994cf-0e42-4be8-a715-bac395971e4b&quot;
+  }
+}</component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 0
+}</component>
+  <component name="ProjectId" id="2exR2A0OKtPv9Vf4oDRDkBxYNJr" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="1" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+<<<<<<< HEAD
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;as-link&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/aysestinnett/Coder/slice-boilerplate&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;prettierjs.PrettierConfiguration.Package&quot;: &quot;/Users/aysestinnett/Coder/slice-boilerplate/node_modules/prettier&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;inlay.hints&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/Users/aysestinnett/Coder/slice-boilerplate/node_modules/typescript/lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+=======
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "as-link",
+    "last_opened_file_path": "/Users/aysestinnett/Coder/elizabeth-young",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "prettierjs.PrettierConfiguration.Package": "/Users/aysestinnett/Coder/slice-boilerplate/node_modules/prettier",
+    "settings.editor.selected.configurable": "inlay.hints",
+    "ts.external.directory.path": "/Users/aysestinnett/Coder/elizabeth-young/node_modules/typescript/lib",
+    "vue.rearranger.settings.migration": "true"
+>>>>>>> main
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/components/Slices" />
+      <recent name="$PROJECT_DIR$/components/Stories" />
+      <recent name="$PROJECT_DIR$/components/Stories/CardGridStory" />
+      <recent name="$PROJECT_DIR$/pages" />
+      <recent name="$PROJECT_DIR$/components/Layout" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/components/Slices/Search" />
+      <recent name="$PROJECT_DIR$/components/Slices/ImageSlider" />
+      <recent name="$PROJECT_DIR$/components/Slices" />
+      <recent name="$PROJECT_DIR$/stories/Stack" />
+      <recent name="$PROJECT_DIR$/stories" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-WS-241.18034.50" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="2a056f1b-44a8-4c6f-bcc0-e10b5c04e7c4" name="Changes" comment="" />
+      <created>1712844032487</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1712844032487</updated>
+      <workItem from="1712844033827" duration="3411000" />
+      <workItem from="1712868783054" duration="969000" />
+      <workItem from="1713731733901" duration="726000" />
+      <workItem from="1713734440755" duration="5614000" />
+      <workItem from="1714276465861" duration="138000" />
+      <workItem from="1714422292879" duration="147000" />
+      <workItem from="1714422450021" duration="51000" />
+      <workItem from="1714668853547" duration="849000" />
+      <workItem from="1714747384426" duration="941000" />
+      <workItem from="1714748480626" duration="251000" />
+      <workItem from="1714748734216" duration="400000" />
+      <workItem from="1715212648828" duration="2701000" />
+      <workItem from="1715718048418" duration="1448000" />
+      <workItem from="1715795244867" duration="643000" />
+<<<<<<< HEAD
+      <workItem from="1720162927674" duration="13000" />
+      <workItem from="1720200259069" duration="300000" />
+=======
+      <workItem from="1720152821177" duration="423000" />
+>>>>>>> main
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

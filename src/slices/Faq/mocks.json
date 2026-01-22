@@ -1,0 +1,237 @@
+[
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "threeColumns",
+    "primary": {
+      "theme": {
+        "__TYPE__": "FieldContent",
+        "value": "Blue",
+        "type": "Select"
+      },
+      "title": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "heading2",
+            "content": {
+              "text": "Young"
+            }
+          }
+        ]
+      },
+      "description": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Sunt ad duis labore exercitation."
+            }
+          }
+        ]
+      },
+      "faq": {
+        "__TYPE__": "GroupContentType",
+        "value": [
+          {
+            "__TYPE__": "GroupItemContent",
+            "value": [
+              [
+                "question",
+                {
+                  "__TYPE__": "StructuredTextContent",
+                  "value": [
+                    {
+                      "type": "paragraph",
+                      "content": {
+                        "text": "Occaecat aliqua eiusmod et ex amet."
+                      }
+                    }
+                  ]
+                }
+              ],
+              [
+                "answer",
+                {
+                  "__TYPE__": "StructuredTextContent",
+                  "value": [
+                    {
+                      "type": "paragraph",
+                      "content": {
+                        "text": "Voluptate in irure eu consequat minim exercitation quis aute nisi do adipisicing irure ea eu. Id cupidatat consectetur irure officia quis ullamco quis et qui culpa eu laborum do."
+                      }
+                    }
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "anchor": {
+        "__TYPE__": "FieldContent",
+        "value": "teacher",
+        "type": "Text"
+      }
+    },
+    "items": [
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": []
+      }
+    ]
+  },
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "centered",
+    "primary": {
+      "theme": {
+        "__TYPE__": "FieldContent",
+        "value": "Light",
+        "type": "Select"
+      },
+      "title": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "heading2",
+            "content": {
+              "text": "Person"
+            }
+          }
+        ]
+      },
+      "faq": {
+        "__TYPE__": "GroupContentType",
+        "value": [
+          {
+            "__TYPE__": "GroupItemContent",
+            "value": [
+              [
+                "question",
+                {
+                  "__TYPE__": "StructuredTextContent",
+                  "value": [
+                    {
+                      "type": "paragraph",
+                      "content": {
+                        "text": "Irure irure laboris id est. Deserunt reprehenderit laboris consequat quis laborum nulla qui reprehenderit dolor id ipsum ad qui laborum."
+                      }
+                    }
+                  ]
+                }
+              ],
+              [
+                "answer",
+                {
+                  "__TYPE__": "StructuredTextContent",
+                  "value": [
+                    {
+                      "type": "paragraph",
+                      "content": {
+                        "text": "Sit mollit elit laborum officia ea deserunt sunt adipisicing commodo. Dolor nulla eu in minim est aute elit eiusmod in laboris."
+                      }
+                    }
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "anchor": {
+        "__TYPE__": "FieldContent",
+        "value": "skin",
+        "type": "Text"
+      }
+    },
+    "items": [
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": []
+      }
+    ]
+  },
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "twoColumns",
+    "primary": {
+      "theme": {
+        "__TYPE__": "FieldContent",
+        "value": "White",
+        "type": "Select"
+      },
+      "title": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "heading2",
+            "content": {
+              "text": "Ought"
+            }
+          }
+        ]
+      },
+      "description": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Proident id velit laborum magna id eu fugiat."
+            }
+          }
+        ]
+      },
+      "faq": {
+        "__TYPE__": "GroupContentType",
+        "value": [
+          {
+            "__TYPE__": "GroupItemContent",
+            "value": [
+              [
+                "question",
+                {
+                  "__TYPE__": "StructuredTextContent",
+                  "value": [
+                    {
+                      "type": "paragraph",
+                      "content": {
+                        "text": "Tempor culpa veniam adipisicing do ad dolor est occaecat Lorem aliqua. Fugiat amet eu consectetur ullamco proident culpa nostrud labore deserunt deserunt veniam dolore cupidatat ipsum magna. Do consequat tempor sunt adipisicing anim."
+                      }
+                    }
+                  ]
+                }
+              ],
+              [
+                "answer",
+                {
+                  "__TYPE__": "StructuredTextContent",
+                  "value": [
+                    {
+                      "type": "paragraph",
+                      "content": {
+                        "text": "Irure cillum consequat exercitation sit nulla est voluptate nostrud ad laboris culpa pariatur laboris proident. Esse dolor nostrud irure. Enim mollit ea aliqua amet aliquip reprehenderit veniam eiusmod laboris voluptate."
+                      }
+                    }
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "anchor": {
+        "__TYPE__": "FieldContent",
+        "value": "person",
+        "type": "Text"
+      }
+    },
+    "items": [
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": []
+      }
+    ]
+  }
+]

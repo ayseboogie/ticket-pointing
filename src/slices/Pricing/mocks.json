@@ -1,0 +1,419 @@
+[
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "default",
+    "primary": {
+      "theme": {
+        "__TYPE__": "FieldContent",
+        "value": "White",
+        "type": "Select"
+      },
+      "title": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "heading2",
+            "content": {
+              "text": "Speech"
+            }
+          }
+        ]
+      },
+      "description": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Proident magna do ad incididunt adipisicing."
+            }
+          }
+        ]
+      },
+      "plans": {
+        "__TYPE__": "GroupContentType",
+        "value": [
+          {
+            "__TYPE__": "GroupItemContent",
+            "value": [
+              [
+                "name",
+                {
+                  "__TYPE__": "FieldContent",
+                  "value": "throat",
+                  "type": "Text"
+                }
+              ],
+              [
+                "price",
+                {
+                  "__TYPE__": "FieldContent",
+                  "value": "rocky",
+                  "type": "Text"
+                }
+              ],
+              [
+                "description",
+                {
+                  "__TYPE__": "StructuredTextContent",
+                  "value": [
+                    {
+                      "type": "paragraph",
+                      "content": {
+                        "text": "Officia commodo commodo qui voluptate. Nostrud consectetur sint occaecat cillum laborum aliquip deserunt nulla dolor dolor ullamco quis sint veniam. Officia aliqua irure commodo pariatur."
+                      }
+                    }
+                  ]
+                }
+              ],
+              [
+                "register_link",
+                {
+                  "key": "100a6417-dd35-44b0-8950-577be31465a7",
+                  "__TYPE__": "LinkContent",
+                  "value": {
+                    "__TYPE__": "ExternalLink",
+                    "url": "http://google.com"
+                  }
+                }
+              ],
+              [
+                "features",
+                {
+                  "__TYPE__": "StructuredTextContent",
+                  "value": [
+                    {
+                      "type": "paragraph",
+                      "content": {
+                        "text": "Voluptate consectetur laboris mollit duis est culpa culpa enim cillum."
+                      }
+                    }
+                  ]
+                }
+              ],
+              [
+                "featured",
+                {
+                  "__TYPE__": "BooleanContent",
+                  "value": true
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "anchor": {
+        "__TYPE__": "FieldContent",
+        "value": "exciting",
+        "type": "Text"
+      }
+    },
+    "items": []
+  },
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "withPromo",
+    "primary": {
+      "theme": {
+        "__TYPE__": "FieldContent",
+        "value": "White",
+        "type": "Select"
+      },
+      "title": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "heading2",
+            "content": {
+              "text": "Cotton"
+            }
+          }
+        ]
+      },
+      "description": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Enim ipsum officia occaecat ea sit incididunt ipsum proident veniam cillum quis. Nulla dolore consectetur nulla enim duis quis minim."
+            }
+          }
+        ]
+      },
+      "plans": {
+        "__TYPE__": "GroupContentType",
+        "value": [
+          {
+            "__TYPE__": "GroupItemContent",
+            "value": [
+              [
+                "name",
+                {
+                  "__TYPE__": "FieldContent",
+                  "value": "room",
+                  "type": "Text"
+                }
+              ],
+              [
+                "description",
+                {
+                  "__TYPE__": "StructuredTextContent",
+                  "value": [
+                    {
+                      "type": "paragraph",
+                      "content": {
+                        "text": "Labore adipisicing nostrud cillum anim pariatur occaecat ipsum. Proident dolore aliqua ullamco. In ad do reprehenderit laboris velit esse cupidatat dolore amet nulla dolor cupidatat."
+                      }
+                    }
+                  ]
+                }
+              ],
+              [
+                "register_link",
+                {
+                  "key": "34fb91c2-5315-4e39-8e99-85fd9a812ee3",
+                  "__TYPE__": "LinkContent",
+                  "value": {
+                    "__TYPE__": "ExternalLink",
+                    "url": "http://google.com"
+                  }
+                }
+              ],
+              [
+                "features",
+                {
+                  "__TYPE__": "StructuredTextContent",
+                  "value": [
+                    {
+                      "type": "paragraph",
+                      "content": {
+                        "text": "Et fugiat pariatur consectetur id pariatur proident laborum incididunt eiusmod culpa eiusmod laborum nostrud est enim. Lorem ea cupidatat elit mollit sint. Commodo ullamco ex do culpa anim qui reprehenderit aliqua in minim adipisicing pariatur sit aliqua."
+                      }
+                    }
+                  ]
+                }
+              ],
+              [
+                "price_monthly",
+                {
+                  "__TYPE__": "FieldContent",
+                  "value": "compound",
+                  "type": "Text"
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "anchor": {
+        "__TYPE__": "FieldContent",
+        "value": "transportation",
+        "type": "Text"
+      },
+      "promo_title": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "heading3",
+            "content": {
+              "text": "Older"
+            }
+          }
+        ]
+      },
+      "promo_description": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Lorem do labore velit velit adipisicing adipisicing id et fugiat dolor esse eu consequat."
+            }
+          }
+        ]
+      },
+      "promo_link_label": {
+        "__TYPE__": "FieldContent",
+        "value": "remove",
+        "type": "Text"
+      },
+      "promo_link": {
+        "key": "cbc3f6ff-a74c-4473-9fd1-5c62da808001",
+        "__TYPE__": "LinkContent",
+        "value": {
+          "__TYPE__": "ExternalLink",
+          "url": "https://slicemachine.dev"
+        }
+      }
+    },
+    "items": [
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": []
+      }
+    ]
+  },
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "withFilter",
+    "primary": {
+      "theme": {
+        "__TYPE__": "FieldContent",
+        "value": "Green",
+        "type": "Select"
+      },
+      "title": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "heading2",
+            "content": {
+              "text": "Youth"
+            }
+          }
+        ]
+      },
+      "description": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Sit quis irure irure officia dolore."
+            }
+          }
+        ]
+      },
+      "plans": {
+        "__TYPE__": "GroupContentType",
+        "value": [
+          {
+            "__TYPE__": "GroupItemContent",
+            "value": [
+              [
+                "name",
+                {
+                  "__TYPE__": "FieldContent",
+                  "value": "manner",
+                  "type": "Text"
+                }
+              ],
+              [
+                "price_monthly",
+                {
+                  "__TYPE__": "FieldContent",
+                  "value": "bet",
+                  "type": "Text"
+                }
+              ],
+              [
+                "description",
+                {
+                  "__TYPE__": "StructuredTextContent",
+                  "value": [
+                    {
+                      "type": "paragraph",
+                      "content": {
+                        "text": "Pariatur officia occaecat ad mollit occaecat exercitation in ut voluptate."
+                      }
+                    }
+                  ]
+                }
+              ],
+              [
+                "register_link",
+                {
+                  "key": "8ebb51fe-0751-4353-993b-acbca03b5e88",
+                  "__TYPE__": "LinkContent",
+                  "value": {
+                    "__TYPE__": "ExternalLink",
+                    "url": "http://google.com"
+                  }
+                }
+              ],
+              [
+                "features",
+                {
+                  "__TYPE__": "StructuredTextContent",
+                  "value": [
+                    {
+                      "type": "paragraph",
+                      "content": {
+                        "text": "Proident qui aliquip aliquip consequat."
+                      }
+                    }
+                  ]
+                }
+              ],
+              [
+                "price_yearly",
+                {
+                  "__TYPE__": "FieldContent",
+                  "value": "porch",
+                  "type": "Text"
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "promo_title": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "heading3",
+            "content": {
+              "text": "Solar"
+            }
+          }
+        ]
+      },
+      "promo_description": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Excepteur duis enim officia id dolore ad veniam aute ullamco dolore quis proident minim est. Veniam aliqua quis quis consectetur aliquip commodo anim dolor anim amet eiusmod ea."
+            }
+          }
+        ]
+      },
+      "promo_link_label": {
+        "__TYPE__": "FieldContent",
+        "value": "wait",
+        "type": "Text"
+      },
+      "promo_link": {
+        "key": "e7389068-0063-4480-b1bb-0b7648041512",
+        "__TYPE__": "LinkContent",
+        "value": {
+          "__TYPE__": "ExternalLink",
+          "url": "http://google.com"
+        }
+      },
+      "anchor": {
+        "__TYPE__": "FieldContent",
+        "value": "herself",
+        "type": "Text"
+      },
+      "monthly_label": {
+        "__TYPE__": "FieldContent",
+        "value": "take",
+        "type": "Text"
+      },
+      "yearly_label": {
+        "__TYPE__": "FieldContent",
+        "value": "rapidly",
+        "type": "Text"
+      }
+    },
+    "items": [
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": []
+      }
+    ]
+  }
+]

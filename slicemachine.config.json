@@ -1,0 +1,11 @@
+{
+  "repositoryName": "slice-boilerplate",
+  "adapter": {
+    "resolve": "@slicemachine/adapter-next",
+    "options": {
+      "lazyLoadSlices": true
+    }
+  },
+  "libraries": ["./src/slices"],
+  "localSliceSimulatorURL": "http://localhost:3000/slice-simulator"
+}

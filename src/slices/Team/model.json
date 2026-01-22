@@ -1,0 +1,128 @@
+{
+  "id": "team",
+  "type": "SharedSlice",
+  "name": "Team",
+  "description": "Team",
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Default",
+      "imageUrl": "",
+      "primary": {
+        "theme": {
+          "type": "Select",
+          "config": {
+            "label": "Theme",
+            "placeholder": "",
+            "options": ["White", "Dark", "Light", "Blue", "Green"],
+            "default_value": "White"
+          }
+        },
+        "title": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Title",
+            "placeholder": "",
+            "allowTargetBlank": true,
+            "single": "heading2"
+          }
+        },
+        "description": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Description",
+            "placeholder": "",
+            "allowTargetBlank": true,
+            "multi": "paragraph,hyperlink,em,strong"
+          }
+        },
+        "board_group_label": {
+          "type": "Text",
+          "config": {
+            "label": "Board Group Label",
+            "placeholder": ""
+          }
+        },
+        "board_members": {
+          "type": "Group",
+          "config": {
+            "label": "Board Members",
+            "repeat": true,
+            "fields": {
+              "name": {
+                "type": "Text",
+                "config": {
+                  "label": "Name",
+                  "placeholder": ""
+                }
+              },
+              "role": {
+                "type": "Text",
+                "config": {
+                  "label": "Role",
+                  "placeholder": ""
+                }
+              },
+              "member_photo": {
+                "type": "Image",
+                "config": {
+                  "label": "Member Photo",
+                  "constraint": {
+                    "width": 560,
+                    "height": 560
+                  },
+                  "thumbnails": []
+                }
+              }
+            }
+          }
+        },
+        "team_group_label": {
+          "type": "Text",
+          "config": {
+            "label": "Team Group Label",
+            "placeholder": ""
+          }
+        },
+        "team_members": {
+          "type": "Group",
+          "config": {
+            "label": "Team Members",
+            "repeat": true,
+            "fields": {
+              "name": {
+                "type": "Text",
+                "config": {
+                  "label": "Name",
+                  "placeholder": ""
+                }
+              },
+              "role": {
+                "type": "Text",
+                "config": {
+                  "label": "Role",
+                  "placeholder": ""
+                }
+              },
+              "member_photo": {
+                "type": "Image",
+                "config": {
+                  "label": "Member Photo",
+                  "constraint": {
+                    "width": 560,
+                    "height": 560
+                  },
+                  "thumbnails": []
+                }
+              }
+            }
+          }
+        }
+      },
+      "items": {}
+    }
+  ]
+}

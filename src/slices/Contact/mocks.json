@@ -1,0 +1,47 @@
+[
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "default",
+    "primary": {
+      "title": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Occaecat velit quis qui labore anim dolore non consectetur. Ea deserunt sint fugiat in mollit ex."
+            }
+          }
+        ]
+      },
+      "post_message_send_message": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Labore excepteur et labore deserunt sint in consequat occaecat tempor. Cupidatat aute in esse ad anim sit aute magna cillum ut exercitation anim qui."
+            }
+          }
+        ]
+      },
+      "theme": {
+        "__TYPE__": "FieldContent",
+        "value": "White",
+        "type": "Select"
+      },
+      "subtitle": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Aliquip laboris minim duis est consectetur nostrud ut esse pariatur do voluptate ad sint id. Pariatur commodo cillum sunt est sit ipsum reprehenderit sint."
+            }
+          }
+        ]
+      }
+    },
+    "items": []
+  }
+]

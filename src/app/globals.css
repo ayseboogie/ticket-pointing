@@ -1,0 +1,177 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family:
+    "Merriweather",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    "Fira Sans",
+    "Droid Sans",
+    "Helvetica Neue",
+    sans-serif;
+
+  @apply bg-background;
+  @apply text-textMain;
+  @apply tracking-normal;
+  @apply text-base;
+  @apply md:text-lg;
+}
+
+/* 🌾 Links */
+a:hover {
+  @apply text-highlight;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Text */
+.text-wide {
+  @apply tracking-wide text-base md:text-lg;
+}
+
+.text-widest {
+  @apply tracking-widest text-base md:text-lg;
+}
+
+/* 🎸 Buttons */
+.btn-primary {
+  @apply bg-background text-highlight border border-highlight rounded-sm px-3 md:px-6 py-2.5 md:py-2 text-base leading-tight transition duration-150;
+}
+
+.btn-primary:hover {
+  @apply bg-highlight text-background;
+}
+
+.btn-primary:disabled {
+  @apply bg-btnDisabled text-textSecondary border border-btnDisabled opacity-50 cursor-not-allowed;
+}
+
+.btn-primary.rounded-l-none {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+/* 🎤 Headings */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: Merriweather, serif;
+  @apply text-textMain;
+}
+
+h1 {
+  @apply text-4xl md:text-5xl font-bold;
+}
+
+h2 {
+  @apply text-3xl md:text-4xl font-semibold;
+}
+
+h3 {
+  @apply text-2xl md:text-3xl font-medium;
+}
+
+/* 📖 Blockquote */
+blockquote {
+  @apply italic border-l-4 border-accent pl-4 text-textSecondary;
+}
+
+/* Custom styles for the contact form input fields */
+.label-text {
+  @apply text-sm text-textMain;
+}
+
+.input-custom {
+  @apply w-full rounded-md border border-textSecondary py-3 pr-7 pl-3 text-textSecondary bg-background focus:outline-none focus:border-textMain focus:ring-1 focus:ring-textSecondary transition duration-150;
+}
+
+.input-custom::placeholder {
+  @apply text-highlight;
+}
+
+.input-custom:focus {
+  @apply border-textMain;
+}
+
+/* Custom styles for the contact form input fields */
+.input-custom-large {
+  @apply h-40 w-full rounded-md border border-textSecondary py-3 pr-7 pl-3 text-textSecondary bg-background focus:outline-none focus:border-textMain focus:ring-1 focus:ring-textSecondary transition duration-150;
+}
+
+.input-custom-large::placeholder {
+  @apply text-highlight;
+}
+
+.input-custom-large:focus {
+  @apply border-textMain;
+}
+
+/* navigation components */
+@layer utilities {
+  .flex-center {
+    @apply flex items-center;
+  }
+
+  .flex-center-between {
+    @apply flex items-center justify-between;
+  }
+}
+
+/* nav desktop */
+.navBar-wrapper {
+  @apply h-16 fixed inset-0 flex-center bg-background text-textMain text-base z-[1000];
+}
+
+.tab-span {
+  @apply gap-1 hover:bg-darkGrey/5 cursor-pointer px-6 py-2 rounded-md;
+}
+
+@layer components {
+  .sub-menu {
+    @apply absolute top-[4.2rem] origin-[50%_-170px] bg-background rounded-md shadow-lg shadow-textSecondary;
+  }
+}
+
+.submmenu-wrapper {
+  @apply grid gap-2 grid-cols-1 first:mt-2 last:mb-2;
+}
+
+.submenu-link {
+  @apply relative cursor-pointer hover:bg-darkGrey/5 px-4;
+}
+
+.submenu-name {
+  @apply font-semibold my-1.5;
+}
+
+/* nav mobile */
+.hamburger-menu {
+  @apply lg:hidden z-[999] relative;
+}
+
+.mobile-nav-wrapper {
+  @apply fixed left-0 right-0 top-16 overflow-y-auto h-full bg-darkGrey backdrop-blur text-background p-6 pb-20;
+}
+
+.mobile-menu-link {
+  @apply p-4 hover:bg-white/5 rounded-md cursor-pointer relative;
+}
+
+.mobile-submenu-link {
+  @apply p-2.5 hover:bg-white/5 rounded-md gap-x-2 cursor-pointer;
+}

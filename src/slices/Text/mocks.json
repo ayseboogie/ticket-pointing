@@ -1,0 +1,81 @@
+[
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "default",
+    "primary": {
+      "text": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Duis minim exercitation occaecat ea commodo duis fugiat minim nisi in ex ad labore. Laborum exercitation proident nisi."
+            }
+          }
+        ]
+      },
+      "theme": {
+        "__TYPE__": "FieldContent",
+        "value": "Green",
+        "type": "Select"
+      }
+    },
+    "items": []
+  },
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "center",
+    "primary": {
+      "text": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Aliquip eu sunt dolore commodo minim cillum cillum cupidatat eiusmod elit veniam in velit cupidatat cupidatat. Aliquip duis sunt sint. Nisi consectetur incididunt labore ullamco duis."
+            }
+          }
+        ]
+      },
+      "theme": {
+        "__TYPE__": "FieldContent",
+        "value": "White",
+        "type": "Select"
+      }
+    },
+    "items": [
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": []
+      }
+    ]
+  },
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "textSection",
+    "primary": {
+      "text": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Et enim dolore amet amet laboris velit occaecat proident elit mollit cillum commodo. Ipsum excepteur ipsum officia consectetur enim aliqua labore. Id tempor non commodo aliquip laborum."
+            }
+          }
+        ]
+      },
+      "theme": {
+        "__TYPE__": "FieldContent",
+        "value": "White",
+        "type": "Select"
+      }
+    },
+    "items": [
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": []
+      }
+    ]
+  }
+]

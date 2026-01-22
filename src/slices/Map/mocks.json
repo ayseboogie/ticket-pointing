@@ -1,0 +1,25 @@
+[
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "default",
+    "primary": {
+      "title": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Qui voluptate laborum nostrud est occaecat eu. Lorem et cupidatat dolore excepteur fugiat duis tempor voluptate esse ad ea."
+            }
+          }
+        ]
+      },
+      "map_url": {
+        "__TYPE__": "FieldContent",
+        "value": "mind",
+        "type": "Text"
+      }
+    },
+    "items": []
+  }
+]

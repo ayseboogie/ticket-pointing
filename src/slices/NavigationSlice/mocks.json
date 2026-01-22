@@ -1,0 +1,64 @@
+[
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "default",
+    "primary": {
+      "link": {
+        "key": "63a0dfc2-b4b7-4ae2-9f2f-d0a7f8ec569e",
+        "__TYPE__": "LinkContent",
+        "value": {
+          "__TYPE__": "ExternalLink",
+          "url": "http://google.com"
+        }
+      },
+      "submenu": {
+        "__TYPE__": "GroupContentType",
+        "value": [
+          {
+            "__TYPE__": "GroupItemContent",
+            "value": [
+              [
+                "name",
+                {
+                  "__TYPE__": "StructuredTextContent",
+                  "value": [
+                    {
+                      "type": "paragraph",
+                      "content": {
+                        "text": "Occaecat duis tempor duis est non. Duis enim exercitation ad ea sit proident qui."
+                      }
+                    }
+                  ]
+                }
+              ],
+              [
+                "link",
+                {
+                  "__TYPE__": "LinkContent",
+                  "key": "13282239-8976-44c1-91ce-44edf2e0c76f",
+                  "value": {
+                    "__TYPE__": "ExternalLink",
+                    "url": "http://twitter.com",
+                    "text": "cotton"
+                  }
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "name": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Lorem fugiat exercitation in commodo reprehenderit ipsum consectetur non aliquip pariatur labore. Sint eiusmod et eiusmod consequat id anim nisi qui enim do ullamco mollit eiusmod aliqua. Elit in eu aute."
+            }
+          }
+        ]
+      }
+    },
+    "items": []
+  }
+]

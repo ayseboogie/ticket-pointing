@@ -1,0 +1,401 @@
+{
+  "id": "pricing",
+  "type": "SharedSlice",
+  "name": "Pricing",
+  "description": "Pricing",
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Default",
+      "imageUrl": "",
+      "primary": {
+        "theme": {
+          "type": "Select",
+          "config": {
+            "label": "Theme",
+            "placeholder": "",
+            "options": ["White", "Dark", "Light", "Blue", "Green"],
+            "default_value": "White"
+          }
+        },
+        "title": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Title",
+            "placeholder": "This is where it all begins...",
+            "allowTargetBlank": true,
+            "single": "heading2,strong,em"
+          }
+        },
+        "description": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Description",
+            "placeholder": "",
+            "allowTargetBlank": true,
+            "single": "paragraph,em,strong"
+          }
+        },
+        "plans": {
+          "type": "Group",
+          "config": {
+            "label": "Plans",
+            "repeat": true,
+            "fields": {
+              "name": {
+                "type": "Text",
+                "config": {
+                  "label": "Name",
+                  "placeholder": ""
+                }
+              },
+              "price": {
+                "type": "Text",
+                "config": {
+                  "label": "Price",
+                  "placeholder": ""
+                }
+              },
+              "description": {
+                "type": "StructuredText",
+                "config": {
+                  "label": "Description",
+                  "placeholder": "",
+                  "allowTargetBlank": true,
+                  "single": "paragraph,em,strong"
+                }
+              },
+              "register_link": {
+                "type": "Link",
+                "config": {
+                  "label": "Register Link",
+                  "placeholder": "",
+                  "select": null,
+                  "allowTargetBlank": false,
+                  "allowText": false,
+                  "repeat": false
+                }
+              },
+              "features": {
+                "type": "StructuredText",
+                "config": {
+                  "label": "Features",
+                  "placeholder": "",
+                  "allowTargetBlank": true,
+                  "multi": "em,strong,list-item"
+                }
+              },
+              "featured": {
+                "type": "Boolean",
+                "config": {
+                  "label": "Featured",
+                  "placeholder_false": "false",
+                  "placeholder_true": "true",
+                  "default_value": false
+                }
+              }
+            }
+          }
+        },
+        "anchor": {
+          "type": "Text",
+          "config": {
+            "label": "Anchor",
+            "placeholder": ""
+          }
+        }
+      },
+      "items": {}
+    },
+    {
+      "id": "withPromo",
+      "name": "With Promo",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Default",
+      "imageUrl": "",
+      "primary": {
+        "theme": {
+          "type": "Select",
+          "config": {
+            "label": "Theme",
+            "placeholder": "",
+            "options": ["White", "Dark", "Light", "Blue", "Green"],
+            "default_value": "White"
+          }
+        },
+        "title": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Title",
+            "placeholder": "This is where it all begins...",
+            "allowTargetBlank": true,
+            "single": "heading2,strong,em"
+          }
+        },
+        "description": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Description",
+            "placeholder": "",
+            "allowTargetBlank": true,
+            "single": "paragraph,em,strong"
+          }
+        },
+        "plans": {
+          "type": "Group",
+          "config": {
+            "label": "Plans",
+            "repeat": true,
+            "fields": {
+              "name": {
+                "type": "Text",
+                "config": {
+                  "label": "Name",
+                  "placeholder": ""
+                }
+              },
+              "price_monthly": {
+                "type": "Text",
+                "config": {
+                  "label": "Price Monthly",
+                  "placeholder": ""
+                }
+              },
+              "description": {
+                "type": "StructuredText",
+                "config": {
+                  "label": "Description",
+                  "placeholder": "",
+                  "allowTargetBlank": true,
+                  "single": "paragraph,em,strong"
+                }
+              },
+              "register_link": {
+                "type": "Link",
+                "config": {
+                  "label": "Register Link",
+                  "placeholder": "",
+                  "select": null,
+                  "allowTargetBlank": false,
+                  "allowText": false,
+                  "repeat": false
+                }
+              },
+              "features": {
+                "type": "StructuredText",
+                "config": {
+                  "label": "Features",
+                  "placeholder": "",
+                  "allowTargetBlank": true,
+                  "multi": "em,strong,list-item"
+                }
+              }
+            }
+          }
+        },
+        "promo_title": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Promo Title",
+            "placeholder": "",
+            "allowTargetBlank": true,
+            "single": "em,strong,heading3"
+          }
+        },
+        "promo_description": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Promo Description",
+            "placeholder": "",
+            "allowTargetBlank": true,
+            "single": "paragraph,em"
+          }
+        },
+        "promo_link_label": {
+          "type": "Text",
+          "config": {
+            "label": "Promo Link Label",
+            "placeholder": ""
+          }
+        },
+        "promo_link": {
+          "type": "Link",
+          "config": {
+            "label": "Promo Link",
+            "placeholder": "",
+            "select": null,
+            "allowTargetBlank": false,
+            "allowText": false,
+            "repeat": false
+          }
+        },
+        "anchor": {
+          "type": "Text",
+          "config": {
+            "label": "Anchor",
+            "placeholder": ""
+          }
+        }
+      },
+      "items": {}
+    },
+    {
+      "id": "withFilter",
+      "name": "With Filter",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Default",
+      "imageUrl": "",
+      "primary": {
+        "theme": {
+          "type": "Select",
+          "config": {
+            "label": "Theme",
+            "placeholder": "",
+            "options": ["White", "Dark", "Light", "Blue", "Green"],
+            "default_value": "White"
+          }
+        },
+        "title": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Title",
+            "placeholder": "This is where it all begins...",
+            "allowTargetBlank": true,
+            "single": "heading2,strong,em"
+          }
+        },
+        "description": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Description",
+            "placeholder": "",
+            "allowTargetBlank": true,
+            "single": "paragraph,em,strong"
+          }
+        },
+        "monthly_label": {
+          "type": "Text",
+          "config": {
+            "label": "Monthly Label",
+            "placeholder": ""
+          }
+        },
+        "yearly_label": {
+          "type": "Text",
+          "config": {
+            "label": "Yearly Label",
+            "placeholder": ""
+          }
+        },
+        "plans": {
+          "type": "Group",
+          "config": {
+            "label": "Plans",
+            "repeat": true,
+            "fields": {
+              "name": {
+                "type": "Text",
+                "config": {
+                  "label": "Name",
+                  "placeholder": ""
+                }
+              },
+              "price_monthly": {
+                "type": "Text",
+                "config": {
+                  "label": "Price Monthly",
+                  "placeholder": ""
+                }
+              },
+              "price_yearly": {
+                "type": "Text",
+                "config": {
+                  "label": "Price Yearly",
+                  "placeholder": ""
+                }
+              },
+              "description": {
+                "type": "StructuredText",
+                "config": {
+                  "label": "Description",
+                  "placeholder": "",
+                  "allowTargetBlank": true,
+                  "single": "paragraph,em,strong"
+                }
+              },
+              "register_link": {
+                "type": "Link",
+                "config": {
+                  "label": "Register Link",
+                  "placeholder": "",
+                  "select": null,
+                  "allowTargetBlank": false,
+                  "allowText": false,
+                  "repeat": false
+                }
+              },
+              "features": {
+                "type": "StructuredText",
+                "config": {
+                  "label": "Features",
+                  "placeholder": "",
+                  "allowTargetBlank": true,
+                  "multi": "em,strong,list-item"
+                }
+              }
+            }
+          }
+        },
+        "promo_title": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Promo Title",
+            "placeholder": "",
+            "allowTargetBlank": true,
+            "single": "em,strong,heading3"
+          }
+        },
+        "promo_description": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Promo Description",
+            "placeholder": "",
+            "allowTargetBlank": true,
+            "single": "paragraph,em"
+          }
+        },
+        "promo_link_label": {
+          "type": "Text",
+          "config": {
+            "label": "Promo Link Label",
+            "placeholder": ""
+          }
+        },
+        "promo_link": {
+          "type": "Link",
+          "config": {
+            "label": "Promo Link",
+            "placeholder": "",
+            "select": null,
+            "allowTargetBlank": false,
+            "allowText": false,
+            "repeat": false
+          }
+        },
+        "anchor": {
+          "type": "Text",
+          "config": {
+            "label": "Anchor",
+            "placeholder": ""
+          }
+        }
+      },
+      "items": {}
+    }
+  ]
+}

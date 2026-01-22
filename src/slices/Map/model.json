@@ -1,0 +1,35 @@
+{
+  "id": "map",
+  "type": "SharedSlice",
+  "name": "Map",
+  "description": "Map",
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Default",
+      "imageUrl": "",
+      "primary": {
+        "title": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Title",
+            "placeholder": "",
+            "allowTargetBlank": true,
+            "multi": "paragraph,preformatted,heading1,heading2,heading3,heading4,heading5,heading6,strong,em,hyperlink,image,embed,list-item,o-list-item,rtl"
+          }
+        },
+        "map_url": {
+          "type": "Text",
+          "config": {
+            "label": "Map Url",
+            "placeholder": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d412184.700191170"
+          }
+        }
+      },
+      "items": {}
+    }
+  ]
+}

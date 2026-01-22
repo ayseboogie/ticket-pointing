@@ -1,0 +1,267 @@
+[
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "withImageRight",
+    "primary": {
+      "theme": {
+        "__TYPE__": "FieldContent",
+        "value": "Blue",
+        "type": "Select"
+      },
+      "title": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "heading2",
+            "content": {
+              "text": "Might"
+            }
+          }
+        ]
+      },
+      "description": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Laborum laborum elit laboris ad excepteur Lorem sunt adipisicing. Amet est reprehenderit sit."
+            }
+          }
+        ]
+      },
+      "anchor": {
+        "__TYPE__": "FieldContent",
+        "value": "hole",
+        "type": "Text"
+      },
+      "featured_image": {
+        "origin": {
+          "id": "main",
+          "url": "https://images.unsplash.com/photo-1531771686035-25f47595c87a",
+          "width": 3024,
+          "height": 3778
+        },
+        "url": "https://images.unsplash.com/photo-1531771686035-25f47595c87a?rect=0%2C869%2C3024%2C2039&w=912&h=615",
+        "width": 912,
+        "height": 615,
+        "edit": {
+          "zoom": 1,
+          "crop": {
+            "x": 0,
+            "y": 869
+          },
+          "background": "transparent"
+        },
+        "credits": null,
+        "alt": null,
+        "__TYPE__": "ImageContent",
+        "thumbnails": {}
+      },
+      "buttons": {
+        "__TYPE__": "GroupContentType",
+        "value": [
+          {
+            "__TYPE__": "GroupItemContent",
+            "value": [
+              [
+                "cta_label",
+                {
+                  "__TYPE__": "FieldContent",
+                  "value": "harbor",
+                  "type": "Text"
+                }
+              ],
+              [
+                "cta_link",
+                {
+                  "key": "72a72f6f-cc16-497b-865a-6e798f639797",
+                  "__TYPE__": "LinkContent",
+                  "value": {
+                    "__TYPE__": "ExternalLink",
+                    "url": "https://prismic.io"
+                  }
+                }
+              ],
+              [
+                "cta_type",
+                {
+                  "__TYPE__": "FieldContent",
+                  "value": "Primary",
+                  "type": "Select"
+                }
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "items": [
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": []
+      }
+    ]
+  },
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "withImageLeft",
+    "primary": {
+      "theme": {
+        "__TYPE__": "FieldContent",
+        "value": "Dark",
+        "type": "Select"
+      },
+      "title": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "heading2",
+            "content": {
+              "text": "Student"
+            }
+          }
+        ]
+      },
+      "description": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Mollit nulla duis aute velit. Esse labore ullamco sint nostrud consectetur adipisicing non consectetur aliquip deserunt adipisicing."
+            }
+          }
+        ]
+      },
+      "featured_image": {
+        "origin": {
+          "id": "main",
+          "url": "https://images.unsplash.com/photo-1600804931749-2da4ce26c869",
+          "width": 3199,
+          "height": 3199
+        },
+        "url": "https://images.unsplash.com/photo-1600804931749-2da4ce26c869?rect=0%2C521%2C3199%2C2157&w=912&h=615",
+        "width": 912,
+        "height": 615,
+        "edit": {
+          "zoom": 1,
+          "crop": {
+            "x": 0,
+            "y": 521
+          },
+          "background": "transparent"
+        },
+        "credits": null,
+        "alt": null,
+        "__TYPE__": "ImageContent",
+        "thumbnails": {}
+      },
+      "buttons": {
+        "__TYPE__": "GroupContentType",
+        "value": [
+          {
+            "__TYPE__": "GroupItemContent",
+            "value": [
+              [
+                "cta_label",
+                {
+                  "__TYPE__": "FieldContent",
+                  "value": "cover",
+                  "type": "Text"
+                }
+              ],
+              [
+                "cta_link",
+                {
+                  "key": "39722ba0-e056-4855-a394-a16a01ed3b57",
+                  "__TYPE__": "LinkContent",
+                  "value": {
+                    "__TYPE__": "ExternalLink",
+                    "url": "http://google.com"
+                  }
+                }
+              ],
+              [
+                "cta_type",
+                {
+                  "__TYPE__": "FieldContent",
+                  "value": "Secondary",
+                  "type": "Select"
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "anchor": {
+        "__TYPE__": "FieldContent",
+        "value": "main",
+        "type": "Text"
+      }
+    },
+    "items": [
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": []
+      }
+    ]
+  },
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "default",
+    "primary": {
+      "theme": {
+        "__TYPE__": "FieldContent",
+        "value": "Light",
+        "type": "Select"
+      },
+      "title": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "heading2",
+            "content": {
+              "text": "Stranger"
+            }
+          }
+        ]
+      },
+      "description": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Aliqua sit magna minim dolore incididunt. Irure ea culpa culpa amet cupidatat culpa fugiat. Culpa laborum duis nostrud ea aute elit dolore est labore do ex ipsum occaecat ullamco."
+            }
+          }
+        ]
+      },
+      "cta_label": {
+        "__TYPE__": "FieldContent",
+        "value": "correct",
+        "type": "Text"
+      },
+      "cta_link": {
+        "key": "a3e746f5-9402-43bb-a4c4-e6adb0b0db79",
+        "__TYPE__": "LinkContent",
+        "value": {
+          "__TYPE__": "ExternalLink",
+          "url": "https://slicemachine.dev"
+        }
+      },
+      "anchor": {
+        "__TYPE__": "FieldContent",
+        "value": "seems",
+        "type": "Text"
+      }
+    },
+    "items": [
+      {
+        "__TYPE__": "GroupItemContent",
+        "value": []
+      }
+    ]
+  }
+]

@@ -1,0 +1,380 @@
+{
+  "id": "features",
+  "type": "SharedSlice",
+  "name": "Features",
+  "description": "Features",
+  "variations": [
+    {
+      "id": "leftSide",
+      "name": "Left Side",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Default",
+      "imageUrl": "",
+      "primary": {
+        "theme": {
+          "type": "Select",
+          "config": {
+            "label": "Theme",
+            "placeholder": "",
+            "options": ["White", "Dark", "Light", "Blue", "Green"],
+            "default_value": "White"
+          }
+        },
+        "title": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Title",
+            "placeholder": "This is where it all begins...",
+            "allowTargetBlank": true,
+            "single": "heading2,em,strong"
+          }
+        },
+        "subtitle": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Subtitle",
+            "placeholder": "",
+            "allowTargetBlank": true,
+            "multi": "paragraph,em,strong"
+          }
+        },
+        "features": {
+          "type": "Group",
+          "config": {
+            "label": "Features",
+            "repeat": true,
+            "fields": {
+              "feature_title": {
+                "type": "StructuredText",
+                "config": {
+                  "label": "Feature Title",
+                  "placeholder": "",
+                  "allowTargetBlank": true,
+                  "single": "paragraph,em,strong"
+                }
+              },
+              "feature_description": {
+                "type": "StructuredText",
+                "config": {
+                  "label": "Feature Description",
+                  "placeholder": "",
+                  "allowTargetBlank": true,
+                  "multi": "paragraph,preformatted,heading1,heading2,heading3,heading4,heading5,heading6,strong,em,hyperlink,image,embed,list-item,o-list-item,rtl"
+                }
+              },
+              "feature_screenshot": {
+                "type": "Image",
+                "config": {
+                  "label": "Feature Screenshot",
+                  "constraint": {
+                    "width": 2174,
+                    "height": 1464
+                  },
+                  "thumbnails": []
+                }
+              }
+            }
+          }
+        },
+        "anchor": {
+          "type": "Text",
+          "config": {
+            "label": "Anchor",
+            "placeholder": ""
+          }
+        }
+      },
+      "items": {}
+    },
+    {
+      "id": "rightSide",
+      "name": "Right Side",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Default",
+      "imageUrl": "",
+      "primary": {
+        "theme": {
+          "type": "Select",
+          "config": {
+            "label": "Theme",
+            "placeholder": "",
+            "options": ["White", "Dark", "Light", "Blue", "Green"],
+            "default_value": "White"
+          }
+        },
+        "title": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Title",
+            "placeholder": "This is where it all begins...",
+            "allowTargetBlank": true,
+            "single": "heading2,em,strong"
+          }
+        },
+        "subtitle": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Subtitle",
+            "placeholder": "",
+            "allowTargetBlank": true,
+            "multi": "paragraph,em,strong"
+          }
+        },
+        "features": {
+          "type": "Group",
+          "config": {
+            "label": "Features",
+            "repeat": true,
+            "fields": {
+              "feature_title": {
+                "type": "StructuredText",
+                "config": {
+                  "label": "Feature Title",
+                  "placeholder": "",
+                  "allowTargetBlank": true,
+                  "single": "paragraph,em,strong"
+                }
+              },
+              "feature_screenshot": {
+                "type": "Image",
+                "config": {
+                  "label": "Feature Screenshot",
+                  "constraint": {
+                    "width": 1688,
+                    "height": 856
+                  },
+                  "thumbnails": []
+                }
+              },
+              "feature_description": {
+                "type": "StructuredText",
+                "config": {
+                  "label": "Feature Description",
+                  "placeholder": "",
+                  "allowTargetBlank": true,
+                  "multi": "paragraph,preformatted,heading1,heading2,heading3,heading4,heading5,heading6,strong,em,hyperlink,image,embed,list-item,o-list-item,rtl"
+                }
+              }
+            }
+          }
+        },
+        "anchor": {
+          "type": "Text",
+          "config": {
+            "label": "Anchor",
+            "placeholder": ""
+          }
+        }
+      },
+      "items": {}
+    },
+    {
+      "id": "below",
+      "name": "Below",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Default",
+      "imageUrl": "",
+      "primary": {
+        "theme": {
+          "type": "Select",
+          "config": {
+            "label": "Theme",
+            "placeholder": "",
+            "options": ["White", "Dark", "Light", "Blue", "Green"],
+            "default_value": "White"
+          }
+        },
+        "title": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Title",
+            "placeholder": "This is where it all begins...",
+            "allowTargetBlank": true,
+            "single": "heading2,em,strong"
+          }
+        },
+        "subtitle": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Subtitle",
+            "placeholder": "",
+            "allowTargetBlank": true,
+            "multi": "paragraph,em,strong"
+          }
+        },
+        "features": {
+          "type": "Group",
+          "config": {
+            "label": "Features",
+            "repeat": true,
+            "fields": {
+              "eyebrow": {
+                "type": "StructuredText",
+                "config": {
+                  "label": "Eyebrow",
+                  "placeholder": "",
+                  "allowTargetBlank": true,
+                  "single": "heading3,em,strong"
+                }
+              },
+              "feature_title": {
+                "type": "StructuredText",
+                "config": {
+                  "label": "Feature Title",
+                  "placeholder": "",
+                  "allowTargetBlank": true,
+                  "single": "paragraph,em,strong"
+                }
+              },
+              "feature_description": {
+                "type": "StructuredText",
+                "config": {
+                  "label": "Feature Description",
+                  "placeholder": "",
+                  "allowTargetBlank": true,
+                  "multi": "paragraph,preformatted,heading1,heading2,heading3,heading4,heading5,heading6,strong,em,hyperlink,image,embed,list-item,o-list-item,rtl"
+                }
+              },
+              "icon": {
+                "type": "Image",
+                "config": {
+                  "label": "Icon",
+                  "constraint": {
+                    "width": 128,
+                    "height": 128
+                  },
+                  "thumbnails": []
+                }
+              },
+              "feature_screenshot": {
+                "type": "Image",
+                "config": {
+                  "label": "Feature Screenshot",
+                  "constraint": {
+                    "width": 1688,
+                    "height": 856
+                  },
+                  "thumbnails": []
+                }
+              }
+            }
+          }
+        },
+        "anchor": {
+          "type": "Text",
+          "config": {
+            "label": "Anchor",
+            "placeholder": ""
+          }
+        }
+      },
+      "items": {}
+    },
+    {
+      "id": "above",
+      "name": "Above",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Default",
+      "imageUrl": "",
+      "primary": {
+        "theme": {
+          "type": "Select",
+          "config": {
+            "label": "Theme",
+            "placeholder": "",
+            "options": ["White", "Dark", "Light", "Blue", "Green"],
+            "default_value": "White"
+          }
+        },
+        "title": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Title",
+            "placeholder": "This is where it all begins...",
+            "allowTargetBlank": true,
+            "single": "heading2,em,strong"
+          }
+        },
+        "subtitle": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Subtitle",
+            "placeholder": "",
+            "allowTargetBlank": true,
+            "multi": "paragraph,em,strong"
+          }
+        },
+        "features": {
+          "type": "Group",
+          "config": {
+            "label": "Features",
+            "repeat": true,
+            "fields": {
+              "eyebrow": {
+                "type": "StructuredText",
+                "config": {
+                  "label": "Eyebrow",
+                  "placeholder": "",
+                  "allowTargetBlank": true,
+                  "single": "heading3,em,strong"
+                }
+              },
+              "feature_title": {
+                "type": "StructuredText",
+                "config": {
+                  "label": "Feature Title",
+                  "placeholder": "",
+                  "allowTargetBlank": true,
+                  "single": "paragraph,em,strong"
+                }
+              },
+              "feature_description": {
+                "type": "StructuredText",
+                "config": {
+                  "label": "Feature Description",
+                  "placeholder": "",
+                  "allowTargetBlank": true,
+                  "multi": "paragraph,preformatted,heading1,heading2,heading3,heading4,heading5,heading6,strong,em,hyperlink,image,embed,list-item,o-list-item,rtl"
+                }
+              },
+              "icon": {
+                "type": "Image",
+                "config": {
+                  "label": "Icon",
+                  "constraint": {
+                    "width": 128,
+                    "height": 128
+                  },
+                  "thumbnails": []
+                }
+              },
+              "feature_screenshot": {
+                "type": "Image",
+                "config": {
+                  "label": "Feature Screenshot",
+                  "constraint": {
+                    "width": 1688,
+                    "height": 856
+                  },
+                  "thumbnails": []
+                }
+              }
+            }
+          }
+        },
+        "anchor": {
+          "type": "Text",
+          "config": {
+            "label": "Anchor",
+            "placeholder": ""
+          }
+        }
+      },
+      "items": {}
+    }
+  ]
+}

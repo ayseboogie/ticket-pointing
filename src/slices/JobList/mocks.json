@@ -1,0 +1,77 @@
+[
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "default",
+    "primary": {
+      "theme": {
+        "__TYPE__": "FieldContent",
+        "value": "White",
+        "type": "Select"
+      },
+      "title": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "heading2",
+            "content": {
+              "text": "Meant"
+            }
+          }
+        ]
+      },
+      "description": {
+        "__TYPE__": "StructuredTextContent",
+        "value": [
+          {
+            "type": "paragraph",
+            "content": {
+              "text": "Officia culpa in eu laboris nostrud dolor est."
+            }
+          }
+        ]
+      },
+      "image": {
+        "origin": {
+          "id": "main",
+          "url": "https://images.unsplash.com/photo-1498050108023-c5249f4df085",
+          "width": 3882,
+          "height": 2584
+        },
+        "url": "https://images.unsplash.com/photo-1498050108023-c5249f4df085?rect=743%2C0%2C2397%2C2584&w=512&h=552",
+        "width": 512,
+        "height": 552,
+        "edit": {
+          "zoom": 1,
+          "crop": {
+            "x": 743,
+            "y": 0
+          },
+          "background": "transparent"
+        },
+        "credits": null,
+        "alt": null,
+        "__TYPE__": "ImageContent",
+        "thumbnails": {}
+      },
+      "link_text": {
+        "__TYPE__": "FieldContent",
+        "value": "himself",
+        "type": "Text"
+      },
+      "link": {
+        "key": "acc6327f-80ab-4a6a-83ae-319f5c7d3850",
+        "__TYPE__": "LinkContent",
+        "value": {
+          "__TYPE__": "ExternalLink",
+          "url": "http://twitter.com"
+        }
+      },
+      "anchor": {
+        "__TYPE__": "FieldContent",
+        "value": "written",
+        "type": "Text"
+      }
+    },
+    "items": []
+  }
+]
