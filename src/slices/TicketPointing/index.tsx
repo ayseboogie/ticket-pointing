@@ -12,8 +12,9 @@ type Participant = {
 };
 
 type PresencePayload = {
-  name: string;
-  color: string;
+  clientId: string;
+  name?: string;
+  color?: string;
   selectedValue: number | null;
   roundId: string;
 };
@@ -98,7 +99,8 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
   const [selectedValue, setSelectedValue] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [roundId, setRoundId] = useState(createRoundId);
-  const [presenceByName, setPresenceByName] = useState<
+  const clientId = useMemo(() => createRoundId(), []);
+  const [presenceByClientId, setPresenceByClientId] = useState<
     Record<string, PresencePayload>
   >({});
   const [connectionState, setConnectionState] = useState<
@@ -133,12 +135,12 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
   }, [hasMounted]);
 
   useEffect(() => {
-    if (!supabase || !selectedName) {
+    if (!supabase) {
       return;
     }
 
     const channel = supabase.channel(`room:${roomId}`, {
-      config: { presence: { key: selectedName } },
+      config: { presence: { key: clientId } },
     });
 
     channelRef.current = channel;
@@ -150,13 +152,13 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
 
       Object.values(state).forEach((presenceList) => {
         presenceList.forEach((presence) => {
-          if (presence?.name) {
-            nextPresence[presence.name] = presence;
+          if (presence?.clientId) {
+            nextPresence[presence.clientId] = presence;
           }
         });
       });
 
-      setPresenceByName(nextPresence);
+      setPresenceByClientId(nextPresence);
     });
 
     channel.on("broadcast", { event: "state-request" }, () => {
@@ -177,7 +179,11 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
       }
 
       if (typeof payload.roundId === "string") {
+        const isNewRound = payload.roundId !== roundIdRef.current;
         setRoundId(payload.roundId);
+        if (isNewRound) {
+          setSelectedValue(null);
+        }
       }
     });
 
@@ -185,8 +191,11 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
       if (status === "SUBSCRIBED") {
         setConnectionState("connected");
         channel.track({
-          name: selectedName,
-          color: selectedParticipant?.color ?? "Blue",
+          clientId,
+          name: selectedName ?? undefined,
+          color: selectedName
+            ? (selectedParticipant?.color ?? "Blue")
+            : undefined,
           selectedValue,
           roundId,
         });
@@ -209,20 +218,51 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
       channelRef.current = null;
       setConnectionState("idle");
     };
-  }, [supabase, roomId, selectedName, selectedParticipant?.color]);
+  }, [supabase, roomId, clientId, selectedName, selectedParticipant?.color]);
 
   useEffect(() => {
-    if (!channelRef.current || !selectedName) {
+    if (!channelRef.current) {
       return;
     }
 
     channelRef.current.track({
-      name: selectedName,
-      color: selectedParticipant?.color ?? "Blue",
+      clientId,
+      name: selectedName ?? undefined,
+      color: selectedName ? (selectedParticipant?.color ?? "Blue") : undefined,
       selectedValue,
       roundId,
     });
-  }, [selectedName, selectedParticipant?.color, selectedValue, roundId]);
+  }, [
+    clientId,
+    selectedName,
+    selectedParticipant?.color,
+    selectedValue,
+    roundId,
+  ]);
+
+  const takenNames = useMemo(() => {
+    const next = new Set<string>();
+    Object.values(presenceByClientId).forEach((presence) => {
+      if (presence.name && presence.clientId !== clientId) {
+        next.add(presence.name);
+      }
+    });
+    return next;
+  }, [presenceByClientId, clientId]);
+
+  const presenceByName = useMemo(() => {
+    const next: Record<string, PresencePayload> = {};
+    Object.values(presenceByClientId).forEach((presence) => {
+      if (!presence.name) {
+        return;
+      }
+
+      if (!next[presence.name] || presence.clientId === clientId) {
+        next[presence.name] = presence;
+      }
+    });
+    return next;
+  }, [presenceByClientId, clientId]);
 
   const activeSelections = useMemo(() => {
     const selectionMap: Record<string, number | null> = {};
@@ -347,9 +387,7 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {participants.map((participant) => {
-              const isTaken =
-                presenceByName[participant.name] &&
-                participant.name !== selectedName;
+              const isTaken = takenNames.has(participant.name);
               const isSelected = participant.name === selectedName;
 
               return (
