@@ -20,6 +20,43 @@ type PresencePayload = {
 
 const cardValues = Array.from({ length: 16 }, (_, index) => (index + 1) / 2);
 
+const normalizeColor = (color?: string) =>
+  color?.trim().toLowerCase() || "blue";
+
+const avatarColorClass = (color?: string) => {
+  switch (normalizeColor(color)) {
+    case "green":
+      return "bg-emerald-500";
+    case "orange":
+      return "bg-orange-500";
+    case "purple":
+      return "bg-purple-500";
+    case "red":
+      return "bg-red";
+    case "teal":
+      return "bg-teal-500";
+    default:
+      return "bg-blue-500";
+  }
+};
+
+const selectedColorClass = (color?: string) => {
+  switch (normalizeColor(color)) {
+    case "green":
+      return "border-emerald-600 bg-emerald-600 text-white";
+    case "orange":
+      return "border-orange-500 bg-orange-500 text-white";
+    case "purple":
+      return "border-purple-500 bg-purple-500 text-white";
+    case "red":
+      return "border-red bg-red text-white";
+    case "teal":
+      return "border-teal-500 bg-teal-500 text-white";
+    default:
+      return "border-blue-500 bg-blue-500 text-white";
+  }
+};
+
 const createRoundId = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
@@ -32,7 +69,8 @@ const createRoundId = () => {
  * Component for "TicketPointing" Slices.
  */
 const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
-  const supabase = useMemo(() => getSupabaseClient(), []);
+  const [supabase, setSupabase] = useState(() => getSupabaseClient());
+  const [hasMounted, setHasMounted] = useState(false);
   const channelRef = useRef<RealtimeChannel | null>(null);
 
   const roomId =
@@ -53,7 +91,7 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
         name: participant.name?.trim() ?? "",
         color: participant.avatar_color ?? "Blue",
       }))
-      .filter((participant) => participant.name.length > 0);
+      .filter((participant: Participant) => participant.name.length > 0);
   }, [slice.primary]);
 
   const [selectedName, setSelectedName] = useState<string | null>(null);
@@ -83,6 +121,16 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
   useEffect(() => {
     roundIdRef.current = roundId;
   }, [roundId]);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (hasMounted) {
+      setSupabase(getSupabaseClient());
+    }
+  }, [hasMounted]);
 
   useEffect(() => {
     if (!supabase || !selectedName) {
@@ -225,14 +273,26 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
     });
   };
 
+  if (!hasMounted) {
+    return (
+      <section className="mx-auto max-w-5xl px-6 py-12">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900">{roomTitle}</h2>
+          <p className="mt-3 text-sm text-slate-600">Loading room...</p>
+        </div>
+      </section>
+    );
+  }
+
   if (!supabase) {
     return (
-      <section className="mx-auto max-w-4xl px-6 py-12">
+      <section className="mx-auto max-w-5xl px-6 py-12">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-2xl font-semibold text-slate-900">{roomTitle}</h2>
           <p className="mt-3 text-sm text-slate-600">
             Supabase is not configured. Add `NEXT_PUBLIC_SUPABASE_URL` and
-            `NEXT_PUBLIC_SUPABASE_ANON_KEY` to enable real-time pointing.
+            `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` to enable real-time
+            pointing.
           </p>
         </div>
       </section>
@@ -299,7 +359,7 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
                   className={clsx(
                     "rounded-full border px-3 py-1 text-sm font-medium transition",
                     isSelected
-                      ? "border-slate-800 bg-slate-800 text-white"
+                      ? selectedColorClass(participant.color)
                       : "border-slate-200 text-slate-700 hover:border-slate-300",
                     isTaken ? "cursor-not-allowed opacity-50" : "",
                   )}
@@ -330,7 +390,7 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
                 className={clsx(
                   "rounded-2xl border px-3 py-6 text-lg font-semibold transition",
                   selectedValue === value
-                    ? "border-slate-800 bg-slate-800 text-white"
+                    ? selectedColorClass(selectedParticipant?.color)
                     : "border-slate-200 bg-white text-slate-700 hover:border-slate-300",
                   !selectedName ? "cursor-not-allowed opacity-50" : "",
                 )}
@@ -361,12 +421,7 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
                     <span
                       className={clsx(
                         "h-10 w-10 rounded-full text-sm font-semibold text-white",
-                        participant.color === "Green" && "bg-emerald-500",
-                        participant.color === "Orange" && "bg-orange-500",
-                        participant.color === "Purple" && "bg-purple-500",
-                        participant.color === "Red" && "bg-red-500",
-                        participant.color === "Teal" && "bg-teal-500",
-                        participant.color === "Blue" && "bg-blue-500",
+                        avatarColorClass(participant.color),
                       )}
                     >
                       <span className="flex h-full w-full items-center justify-center">

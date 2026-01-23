@@ -1,9 +1,9 @@
 import * as React from "react";
-// import {
-//   FooterDocument,
-//   LayoutConstantsDocument,
-//   NavigationDocument,
-// } from "@/prismicio-types";
+import type {
+  FooterDocument,
+  LayoutconstantsDocument,
+  NavigationDocument,
+} from "../../../prismicio-types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleArrowUp } from "@fortawesome/free-solid-svg-icons";
 import NavBar from "./Navigation/NavBar.tsx";
@@ -11,15 +11,15 @@ import { Suspense } from "react";
 import Footer from "./Footer.tsx";
 
 type LayoutProps = {
-  // navigation: NavigationDocument;
-  // layoutConstants: LayoutconstantsDocument;
-  // footer: FooterDocument;
+  navigation: NavigationDocument;
+  layoutConstants: LayoutconstantsDocument;
+  footer: FooterDocument;
   children: React.ReactNode;
 };
 const Layout = ({
-  // navigation,
-  // layoutConstants,
-  // footer,
+  navigation,
+  layoutConstants,
+  footer,
   children,
 }: LayoutProps) => {
   return (
@@ -28,13 +28,13 @@ const Layout = ({
       <div id="top" />
 
       {/*<Suspense>*/}
-      {/*<NavBar navigation={navigation} layoutConstants={layoutConstants} />*/}
+      <NavBar navigation={navigation} layoutConstants={layoutConstants} />
       {/*</Suspense>*/}
 
       {/* flex grow keeps footer at bottom */}
       <main className="flex-grow">{children}</main>
 
-      {/*<Footer footer={footer.data} />*/}
+      <Footer footer={footer.data} />
     </div>
   );
 };
