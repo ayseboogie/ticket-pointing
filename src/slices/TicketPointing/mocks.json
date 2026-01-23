@@ -1,0 +1,112 @@
+[
+  {
+    "__TYPE__": "SharedSliceContent",
+    "variation": "default",
+    "primary": {
+      "room_id": {
+        "__TYPE__": "FieldContent",
+        "value": "team-alpha",
+        "type": "Text"
+      },
+      "room_title": {
+        "__TYPE__": "FieldContent",
+        "value": "Sprint Planning Room",
+        "type": "Text"
+      },
+      "allow_reveal": {
+        "__TYPE__": "BooleanContent",
+        "value": true
+      },
+      "participants": {
+        "__TYPE__": "GroupContentType",
+        "value": [
+          {
+            "__TYPE__": "GroupItemContent",
+            "value": [
+              [
+                "name",
+                {
+                  "__TYPE__": "FieldContent",
+                  "value": "Alex",
+                  "type": "Text"
+                }
+              ],
+              [
+                "avatar_color",
+                {
+                  "__TYPE__": "FieldContent",
+                  "value": "Blue",
+                  "type": "Select"
+                }
+              ]
+            ]
+          },
+          {
+            "__TYPE__": "GroupItemContent",
+            "value": [
+              [
+                "name",
+                {
+                  "__TYPE__": "FieldContent",
+                  "value": "Priya",
+                  "type": "Text"
+                }
+              ],
+              [
+                "avatar_color",
+                {
+                  "__TYPE__": "FieldContent",
+                  "value": "Green",
+                  "type": "Select"
+                }
+              ]
+            ]
+          },
+          {
+            "__TYPE__": "GroupItemContent",
+            "value": [
+              [
+                "name",
+                {
+                  "__TYPE__": "FieldContent",
+                  "value": "Diego",
+                  "type": "Text"
+                }
+              ],
+              [
+                "avatar_color",
+                {
+                  "__TYPE__": "FieldContent",
+                  "value": "Orange",
+                  "type": "Select"
+                }
+              ]
+            ]
+          },
+          {
+            "__TYPE__": "GroupItemContent",
+            "value": [
+              [
+                "name",
+                {
+                  "__TYPE__": "FieldContent",
+                  "value": "Sam",
+                  "type": "Text"
+                }
+              ],
+              [
+                "avatar_color",
+                {
+                  "__TYPE__": "FieldContent",
+                  "value": "Purple",
+                  "type": "Select"
+                }
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "items": []
+  }
+]

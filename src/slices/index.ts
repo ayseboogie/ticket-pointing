@@ -26,5 +26,6 @@ export const components = {
   testimonials: dynamic(() => import("./Testimonials")),
   text: dynamic(() => import("./Text")),
   text_grid_row: dynamic(() => import("./TextGridRow")),
+  ticket_pointing: dynamic(() => import("./TicketPointing")),
   video: dynamic(() => import("./Video")),
 };
