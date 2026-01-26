@@ -11,6 +11,7 @@ import {
   selectedColorClass,
   useTicketPointing,
 } from "./useTicketPointing";
+import PointingLoader from "./PointingLoader";
 
 type TicketPointingCmpProps = Pick<SliceComponentProps<any>, "slice"> & {
   footerLogo?: ImageField;
@@ -53,7 +54,7 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
       <section className="mx-auto max-w-5xl px-6 py-12">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-2xl font-semibold text-slate-900">{roomTitle}</h2>
-          <p className="mt-3 text-sm text-slate-600">Loading room...</p>
+          <PointingLoader />
         </div>
       </section>
     );
