@@ -22,7 +22,11 @@ const HeroImage = ({ slice }: HeroSliceImageProps) => {
       id={slice.primary.anchor || undefined}
       data-slice-variation={slice.variation}
     >
-      <div className={cn("relative isolate overflow-hidden")}>
+      <div
+        className={cn(
+          "relative isolate overflow-hidden min-h-[20vh] md:min-h-[35vh] lg:min-h-[45vh]",
+        )}
+      >
         {/* Image */}
         {prismicH.isFilled.image(slice.primary.backgroundimage) && (
           <SuspenseImage
