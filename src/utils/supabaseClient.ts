@@ -1,7 +1,9 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
+// Singleton client to avoid re-creating connections
 let supabaseClient: SupabaseClient | null = null;
 
+// Browser-only client init using public env vars
 export const getSupabaseClient = () => {
   if (typeof window === "undefined") {
     return null;
@@ -14,6 +16,7 @@ export const getSupabaseClient = () => {
     return null;
   }
 
+  // Lazy init once per browser session
   if (!supabaseClient) {
     supabaseClient = createClient(url, anonKey);
   }
