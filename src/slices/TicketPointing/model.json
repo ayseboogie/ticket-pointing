@@ -45,21 +45,6 @@
                   "label": "Name",
                   "placeholder": "Jane"
                 }
-              },
-              "avatar_color": {
-                "type": "Select",
-                "config": {
-                  "label": "Avatar Color",
-                  "placeholder": "",
-                  "options": [
-                    "Blue",
-                    "Green",
-                    "Orange",
-                    "Purple",
-                    "Red",
-                    "Teal"
-                  ]
-                }
               }
             }
           }

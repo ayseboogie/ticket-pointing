@@ -14,11 +14,7 @@ const RootLayout = async ({
   children: ReactNode;
 }>) => {
   const client = createClient();
-  const navigation = await client.getSingle("navigation");
-  const layoutConstants = await client.getSingle("layoutconstants");
   const footer = await client.getSingle("footer");
-
-  console.log("navigation", navigation);
 
   return (
     <html lang="en">
@@ -53,11 +49,7 @@ const RootLayout = async ({
           defer
         />
 
-        <Layout
-          navigation={navigation}
-          layoutConstants={layoutConstants}
-          footer={footer}
-        >
+        <Layout footer={footer}>
           {children}
           {/* vercel speed insights */}
           <SpeedInsights />

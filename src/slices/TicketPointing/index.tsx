@@ -8,7 +8,6 @@ import { getSupabaseClient } from "@/utils/supabaseClient";
 
 type Participant = {
   name: string;
-  color: string;
 };
 
 type PresencePayload = {
@@ -20,6 +19,7 @@ type PresencePayload = {
 };
 
 const cardValues = Array.from({ length: 16 }, (_, index) => (index + 1) / 2);
+const colorOptions = ["Blue", "Green", "Orange", "Purple", "Red", "Teal"];
 
 const normalizeColor = (color?: string) =>
   color?.trim().toLowerCase() || "blue";
@@ -88,14 +88,18 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
     const rawParticipants = slice.primary?.participants ?? [];
 
     return rawParticipants
-      .map((participant: { name?: string; avatar_color?: string }) => ({
+      .map((participant: { name?: string }) => ({
         name: participant.name?.trim() ?? "",
-        color: participant.avatar_color ?? "Blue",
       }))
       .filter((participant: Participant) => participant.name.length > 0);
   }, [slice.primary]);
 
   const [selectedName, setSelectedName] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState("Blue");
+  const [pendingName, setPendingName] = useState<string | null>(null);
+  const [pendingColor, setPendingColor] = useState("Blue");
+  const [isColorModalOpen, setIsColorModalOpen] = useState(false);
+  const [colorError, setColorError] = useState<string | null>(null);
   const [selectedValue, setSelectedValue] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [roundId, setRoundId] = useState(createRoundId);
@@ -107,11 +111,6 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
     "idle" | "connecting" | "connected" | "error"
   >("idle");
   const [error, setError] = useState<string | null>(null);
-
-  const selectedParticipant = useMemo(
-    () => participants.find((participant) => participant.name === selectedName),
-    [participants, selectedName],
-  );
 
   const revealedRef = useRef(revealed);
   const roundIdRef = useRef(roundId);
@@ -193,9 +192,7 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
         channel.track({
           clientId,
           name: selectedName ?? undefined,
-          color: selectedName
-            ? (selectedParticipant?.color ?? "Blue")
-            : undefined,
+          color: selectedName ? selectedColor : undefined,
           selectedValue,
           roundId,
         });
@@ -218,7 +215,7 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
       channelRef.current = null;
       setConnectionState("idle");
     };
-  }, [supabase, roomId, clientId, selectedName, selectedParticipant?.color]);
+  }, [supabase, roomId, clientId, selectedName, selectedColor]);
 
   useEffect(() => {
     if (!channelRef.current) {
@@ -228,17 +225,11 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
     channelRef.current.track({
       clientId,
       name: selectedName ?? undefined,
-      color: selectedName ? (selectedParticipant?.color ?? "Blue") : undefined,
+      color: selectedName ? selectedColor : undefined,
       selectedValue,
       roundId,
     });
-  }, [
-    clientId,
-    selectedName,
-    selectedParticipant?.color,
-    selectedValue,
-    roundId,
-  ]);
+  }, [clientId, selectedName, selectedColor, selectedValue, roundId]);
 
   const takenNames = useMemo(() => {
     const next = new Set<string>();
@@ -263,6 +254,22 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
     });
     return next;
   }, [presenceByClientId, clientId]);
+
+  const usedColors = useMemo(() => {
+    const next = new Set<string>();
+    Object.values(presenceByClientId).forEach((presence) => {
+      if (presence.clientId === clientId || !presence.color) {
+        return;
+      }
+      next.add(normalizeColor(presence.color));
+    });
+    return next;
+  }, [presenceByClientId, clientId]);
+
+  const isColorTaken = (color: string) => usedColors.has(normalizeColor(color));
+
+  const getAvailableColor = () =>
+    colorOptions.find((color) => !isColorTaken(color)) ?? "Blue";
 
   const activeSelections = useMemo(() => {
     const selectionMap: Record<string, number | null> = {};
@@ -397,15 +404,19 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
                   className={clsx(
                     "rounded-full border px-3 py-1 text-sm font-medium transition",
                     isSelected
-                      ? selectedColorClass(participant.color)
+                      ? selectedColorClass(selectedColor)
                       : "border-slate-200 text-slate-700 hover:border-slate-300",
                     isTaken ? "cursor-not-allowed opacity-50" : "",
                   )}
                   disabled={isTaken}
                   onClick={() => {
-                    setSelectedName(participant.name);
-                    setRoundId(createRoundId());
-                    setSelectedValue(null);
+                    const nextColor = isColorTaken(selectedColor)
+                      ? getAvailableColor()
+                      : selectedColor;
+                    setPendingName(participant.name);
+                    setPendingColor(nextColor);
+                    setColorError(null);
+                    setIsColorModalOpen(true);
                   }}
                 >
                   {participant.name}
@@ -428,7 +439,7 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
                 className={clsx(
                   "rounded-2xl border px-3 py-6 text-lg font-semibold transition",
                   selectedValue === value
-                    ? selectedColorClass(selectedParticipant?.color)
+                    ? selectedColorClass(selectedColor)
                     : "border-slate-200 bg-white text-slate-700 hover:border-slate-300",
                   !selectedName ? "cursor-not-allowed opacity-50" : "",
                 )}
@@ -447,8 +458,10 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {participants.map((participant) => {
               const selection = activeSelections[participant.name];
-              const isJoined = Boolean(presenceByName[participant.name]);
+              const presence = presenceByName[participant.name];
+              const isJoined = Boolean(presence);
               const showValue = revealed && selection !== null;
+              const displayColor = presence?.color;
 
               return (
                 <div
@@ -458,8 +471,10 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
                   <div className="flex items-center gap-3">
                     <span
                       className={clsx(
-                        "h-10 w-10 rounded-full text-sm font-semibold text-white",
-                        avatarColorClass(participant.color),
+                        "h-10 w-10 rounded-full text-sm font-semibold",
+                        displayColor
+                          ? clsx("text-white", avatarColorClass(displayColor))
+                          : "bg-slate-100 text-slate-400",
                       )}
                     >
                       <span className="flex h-full w-full items-center justify-center">
@@ -497,6 +512,101 @@ const TicketPointing = ({ slice }: SliceComponentProps<any>) => {
           </div>
         </div>
       </div>
+      {isColorModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-slate-900">
+              Choose your color
+            </h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Pick a color for {pendingName ?? "your name"}.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {colorOptions.map((color) => {
+                const taken = isColorTaken(color);
+                const isSelected = pendingColor === color;
+
+                return (
+                  <button
+                    key={color}
+                    type="button"
+                    className={clsx(
+                      "rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide transition",
+                      isSelected
+                        ? selectedColorClass(color)
+                        : "border-slate-200 text-slate-600 hover:border-slate-300",
+                      taken ? "cursor-not-allowed opacity-40" : "",
+                    )}
+                    disabled={taken}
+                    onClick={() => {
+                      setPendingColor(color);
+                      setColorError(null);
+                    }}
+                  >
+                    {color}
+                  </button>
+                );
+              })}
+            </div>
+            {colorError ? (
+              <p className="mt-3 text-sm text-red-600">{colorError}</p>
+            ) : null}
+            {!colorOptions.some((color) => !isColorTaken(color)) ? (
+              <p className="mt-3 text-sm text-red-600">
+                All colors are currently taken. Please wait for one to free up.
+              </p>
+            ) : null}
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300"
+                onClick={() => {
+                  setIsColorModalOpen(false);
+                  setPendingName(null);
+                  setColorError(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={clsx(
+                  "rounded-full border px-4 py-2 text-sm font-medium transition",
+                  pendingName &&
+                    !isColorTaken(pendingColor) &&
+                    colorOptions.some((color) => !isColorTaken(color))
+                    ? selectedColorClass(pendingColor)
+                    : "cursor-not-allowed border-slate-100 text-slate-300",
+                )}
+                disabled={
+                  !pendingName ||
+                  isColorTaken(pendingColor) ||
+                  !colorOptions.some((color) => !isColorTaken(color))
+                }
+                onClick={() => {
+                  if (!pendingName) {
+                    return;
+                  }
+                  if (isColorTaken(pendingColor)) {
+                    setColorError(
+                      "That color is already taken. Choose another.",
+                    );
+                    return;
+                  }
+                  setSelectedColor(pendingColor);
+                  setSelectedName(pendingName);
+                  setRoundId(createRoundId());
+                  setSelectedValue(null);
+                  setIsColorModalOpen(false);
+                  setColorError(null);
+                }}
+              >
+                Join
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 };
