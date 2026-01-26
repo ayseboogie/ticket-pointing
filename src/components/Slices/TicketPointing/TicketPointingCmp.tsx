@@ -17,6 +17,7 @@ type TicketPointingCmpProps = Pick<SliceComponentProps<any>, "slice"> & {
   footerLogo?: ImageField;
 };
 
+// UI for the Ticket Pointing room
 const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
   const {
     hasMounted,
@@ -49,6 +50,7 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
     handleReset,
   } = useTicketPointing(slice);
 
+  // Avoid SSR/CSR mismatches while the client initializes
   if (!hasMounted) {
     return (
       <section className="mx-auto max-w-5xl px-6 py-12">
@@ -60,6 +62,7 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
     );
   }
 
+  // Supabase config missing -> show helpful message
   if (!supabase) {
     return (
       <section className="mx-auto max-w-5xl px-6 py-12">
@@ -82,7 +85,7 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
           <div className="flex items-center gap-4 sm:gap-6">
             <div>
               <p className="text-xs uppercase tracking-wide text-slate-400">
-                Room ID: {roomId}
+                {roomId}
               </p>
               <h2 className="text-2xl font-semibold text-slate-900">
                 {roomTitle}
@@ -101,6 +104,7 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
               />
             ) : null}
           </div>
+          {/* Room-level controls */}
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -125,6 +129,7 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
           </div>
         </div>
 
+        {/* Join flow: pick a name to claim */}
         <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50 p-4">
           <p className="text-sm font-medium text-slate-700">
             Select your name to join the room.
@@ -155,6 +160,7 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
           </div>
         </div>
 
+        {/* Card selection (local + presence-driven) */}
         <div className="mt-6">
           <div className="mt-3 grid grid-cols-4 gap-3 sm:grid-cols-8">
             {cardValues.map((value) => (
@@ -177,6 +183,7 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
           </div>
         </div>
 
+        {/* Room status: who joined + selection state */}
         <div className="mt-8">
           <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
             Participants
@@ -238,6 +245,7 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
           </div>
         </div>
       </div>
+      {/* Join modal: color selection */}
       {isColorModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">

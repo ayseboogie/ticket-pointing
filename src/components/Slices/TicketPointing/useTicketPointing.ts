@@ -17,10 +17,12 @@ export type PresencePayload = {
   roundId: string;
 };
 
+// Card values shown in the UI
 export const cardValues = Array.from(
   { length: 16 },
   (_, index) => (index + 1) / 2,
 );
+// Allowed avatar colors
 export const colorOptions = [
   "Blue",
   "Green",
@@ -30,9 +32,11 @@ export const colorOptions = [
   "Teal",
 ];
 
+// Normalize color inputs for comparisons
 export const normalizeColor = (color?: string) =>
   color?.trim().toLowerCase() || "blue";
 
+// Tailwind class for participant avatar background
 export const avatarColorClass = (color?: string) => {
   switch (normalizeColor(color)) {
     case "green":
@@ -50,6 +54,7 @@ export const avatarColorClass = (color?: string) => {
   }
 };
 
+// Tailwind class for selected buttons/badges
 export const selectedColorClass = (color?: string) => {
   switch (normalizeColor(color)) {
     case "green":
@@ -67,6 +72,7 @@ export const selectedColorClass = (color?: string) => {
   }
 };
 
+// Unique IDs for rounds and clients
 const createRoundId = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
@@ -110,10 +116,13 @@ type TicketPointingHookResult = {
 export const useTicketPointing = (
   slice: TicketPointingSlice,
 ): TicketPointingHookResult => {
+  // Supabase client (browser-only) - from utils/supabaseClient.ts
   const [supabase, setSupabase] = useState(() => getSupabaseClient());
   const [hasMounted, setHasMounted] = useState(false);
+  // Realtime channel handle (presence + broadcast)
   const channelRef = useRef<RealtimeChannel | null>(null);
 
+  // Room metadata from Prismic slice
   const roomId =
     typeof slice.primary?.room_id === "string" && slice.primary.room_id.trim()
       ? slice.primary.room_id.trim()
@@ -124,6 +133,7 @@ export const useTicketPointing = (
       : "Ticket Pointing";
   const allowReveal = Boolean(slice.primary?.allow_reveal);
 
+  // Normalized participant list
   const participants: Participant[] = useMemo(() => {
     const rawParticipants = slice.primary?.participants ?? [];
 
@@ -134,6 +144,7 @@ export const useTicketPointing = (
       .filter((participant: Participant) => participant.name.length > 0);
   }, [slice.primary]);
 
+  // Local UI state for current user
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState("Blue");
   const [pendingName, setPendingName] = useState<string | null>(null);
@@ -143,7 +154,9 @@ export const useTicketPointing = (
   const [selectedValue, setSelectedValue] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [roundId, setRoundId] = useState(createRoundId);
+  // Stable client ID for presence tracking
   const clientId = useMemo(() => createRoundId(), []);
+  // Raw presence state keyed by clientId
   const [presenceByClientId, setPresenceByClientId] = useState<
     Record<string, PresencePayload>
   >({});
@@ -152,17 +165,21 @@ export const useTicketPointing = (
   >("idle");
   const [error, setError] = useState<string | null>(null);
 
+  // Refs used inside realtime callbacks
   const revealedRef = useRef(revealed);
   const roundIdRef = useRef(roundId);
 
+  // Avoid mismatches between SSR/CSR
   useEffect(() => {
     revealedRef.current = revealed;
   }, [revealed]);
 
+  // Recreate client once mounted (browser-only)
   useEffect(() => {
     roundIdRef.current = roundId;
   }, [roundId]);
 
+  // Join Supabase realtime room: presence + broadcast
   useEffect(() => {
     setHasMounted(true);
   }, []);
@@ -185,6 +202,7 @@ export const useTicketPointing = (
     channelRef.current = channel;
     setConnectionState("connecting");
 
+    // Presence sync: rebuild clientId -> presence map
     channel.on("presence", { event: "sync" }, () => {
       const state = channel.presenceState<PresencePayload>();
       const nextPresence: Record<string, PresencePayload> = {};
@@ -200,6 +218,7 @@ export const useTicketPointing = (
       setPresenceByClientId(nextPresence);
     });
 
+    // New joiners request the latest round/reveal state
     channel.on("broadcast", { event: "state-request" }, () => {
       channel.send({
         type: "broadcast",
@@ -208,6 +227,7 @@ export const useTicketPointing = (
       });
     });
 
+    // Apply room state updates from other clients
     channel.on("broadcast", { event: "state-sync" }, ({ payload }) => {
       if (!payload) {
         return;
@@ -226,6 +246,7 @@ export const useTicketPointing = (
       }
     });
 
+    // Subscribe and publish initial presence
     channel.subscribe((status) => {
       if (status === "SUBSCRIBED") {
         setConnectionState("connected");
@@ -257,6 +278,7 @@ export const useTicketPointing = (
     };
   }, [supabase, roomId, clientId, selectedName, selectedColor]);
 
+  // Keep presence updated as local state changes
   useEffect(() => {
     if (!channelRef.current) {
       return;
@@ -271,6 +293,7 @@ export const useTicketPointing = (
     });
   }, [clientId, selectedName, selectedColor, selectedValue, roundId]);
 
+  // Prevent duplicate name selection
   const takenNames = useMemo(() => {
     const next = new Set<string>();
     Object.values(presenceByClientId).forEach((presence) => {
@@ -281,6 +304,7 @@ export const useTicketPointing = (
     return next;
   }, [presenceByClientId, clientId]);
 
+  // Convenience map: name -> presence
   const presenceByName = useMemo(() => {
     const next: Record<string, PresencePayload> = {};
     Object.values(presenceByClientId).forEach((presence) => {
@@ -295,6 +319,7 @@ export const useTicketPointing = (
     return next;
   }, [presenceByClientId, clientId]);
 
+  // Colors already used by other clients
   const usedColors = useMemo(() => {
     const next = new Set<string>();
     Object.values(presenceByClientId).forEach((presence) => {
@@ -313,6 +338,7 @@ export const useTicketPointing = (
 
   const hasAvailableColor = colorOptions.some((color) => !isColorTaken(color));
 
+  // Selection visibility scoped to current round
   const activeSelections = useMemo(() => {
     const selectionMap: Record<string, number | null> = {};
 
@@ -329,10 +355,12 @@ export const useTicketPointing = (
     return selectionMap;
   }, [participants, presenceByName, roundId]);
 
+  // Local selection; presence is updated via effect
   const handleSelectValue = (value: number) => {
     setSelectedValue(value);
   };
 
+  // Reveal values for everyone in the room
   const handleReveal = () => {
     if (!channelRef.current) {
       return;
@@ -346,6 +374,7 @@ export const useTicketPointing = (
     setRevealed(true);
   };
 
+  // Start a new round (new roundId)
   const handleReset = () => {
     if (!channelRef.current) {
       return;
@@ -362,6 +391,7 @@ export const useTicketPointing = (
     });
   };
 
+  // Begin join flow for a selected participant
   const openColorModal = (name: string) => {
     const nextColor = isColorTaken(selectedColor)
       ? getAvailableColor()
@@ -383,6 +413,7 @@ export const useTicketPointing = (
     setColorError(null);
   };
 
+  // Confirm join, set user identity, and reset round state locally
   const joinRoom = () => {
     if (!pendingName) {
       return;
