@@ -28,8 +28,7 @@ type PickContentRelationshipFieldData<
       TSubRelationship["customtypes"],
       TLang
     >;
-  } & {
-    // Group
+  } & { // Group
     [TGroup in Extract<
       TRelationship["fields"][number],
       | prismic.CustomTypeModelFetchGroupLevel1
@@ -41,8 +40,7 @@ type PickContentRelationshipFieldData<
           PickContentRelationshipFieldData<TGroup, TGroupData, TLang>
         >
       : never;
-  } & {
-    // Other fields
+  } & { // Other fields
     [TFieldKey in Extract<
       TRelationship["fields"][number],
       string
@@ -454,6 +452,7 @@ type PageDocumentDataSlicesSlice =
   | SearchSlice
   | ImageSliderSlice
   | TextGridRowSlice
+  | TicketPointingSlice
   | ContactSlice
   | CardGridSlice
   | AlternateGridSlice
@@ -5607,6 +5606,99 @@ export type TextGridRowSlice = prismic.SharedSlice<
 >;
 
 /**
+ * Item in *TicketPointing → Default → Primary → Participants*
+ */
+export interface TicketPointingSliceDefaultPrimaryParticipantsItem {
+  /**
+   * Name field in *TicketPointing → Default → Primary → Participants*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Jane
+   * - **API ID Path**: ticket_pointing.default.primary.participants[].name
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  name: prismic.KeyTextField;
+}
+
+/**
+ * Primary content in *TicketPointing → Default → Primary*
+ */
+export interface TicketPointingSliceDefaultPrimary {
+  /**
+   * Room ID field in *TicketPointing → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: team-alpha
+   * - **API ID Path**: ticket_pointing.default.primary.room_id
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  room_id: prismic.KeyTextField;
+
+  /**
+   * Room Title field in *TicketPointing → Default → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: Sprint Planning
+   * - **API ID Path**: ticket_pointing.default.primary.room_title
+   * - **Documentation**: https://prismic.io/docs/fields/text
+   */
+  room_title: prismic.KeyTextField;
+
+  /**
+   * Allow Reveal field in *TicketPointing → Default → Primary*
+   *
+   * - **Field Type**: Boolean
+   * - **Placeholder**: *None*
+   * - **Default Value**: true
+   * - **API ID Path**: ticket_pointing.default.primary.allow_reveal
+   * - **Documentation**: https://prismic.io/docs/fields/boolean
+   */
+  allow_reveal: prismic.BooleanField;
+
+  /**
+   * Participants field in *TicketPointing → Default → Primary*
+   *
+   * - **Field Type**: Group
+   * - **Placeholder**: *None*
+   * - **API ID Path**: ticket_pointing.default.primary.participants[]
+   * - **Documentation**: https://prismic.io/docs/fields/repeatable-group
+   */
+  participants: prismic.GroupField<
+    Simplify<TicketPointingSliceDefaultPrimaryParticipantsItem>
+  >;
+}
+
+/**
+ * Default variation for TicketPointing Slice
+ *
+ * - **API ID**: `default`
+ * - **Description**: Default
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type TicketPointingSliceDefault = prismic.SharedSliceVariation<
+  "default",
+  Simplify<TicketPointingSliceDefaultPrimary>,
+  never
+>;
+
+/**
+ * Slice variation for *TicketPointing*
+ */
+type TicketPointingSliceVariation = TicketPointingSliceDefault;
+
+/**
+ * TicketPointing Shared Slice
+ *
+ * - **API ID**: `ticket_pointing`
+ * - **Description**: TicketPointing
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type TicketPointingSlice = prismic.SharedSlice<
+  "ticket_pointing",
+  TicketPointingSliceVariation
+>;
+
+/**
  * Primary content in *Video → Default → Primary*
  */
 export interface VideoSliceDefaultPrimary {
@@ -5880,6 +5972,11 @@ declare module "@prismicio/client" {
       TextGridRowSliceDefault,
       TextGridRowSliceCentered,
       TextGridRowSliceCenteredLinks,
+      TicketPointingSlice,
+      TicketPointingSliceDefaultPrimaryParticipantsItem,
+      TicketPointingSliceDefaultPrimary,
+      TicketPointingSliceVariation,
+      TicketPointingSliceDefault,
       VideoSlice,
       VideoSliceDefaultPrimary,
       VideoSliceVariation,
