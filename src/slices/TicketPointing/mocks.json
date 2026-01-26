@@ -30,14 +30,6 @@
                   "value": "Alex",
                   "type": "Text"
                 }
-              ],
-              [
-                "avatar_color",
-                {
-                  "__TYPE__": "FieldContent",
-                  "value": "Blue",
-                  "type": "Select"
-                }
               ]
             ]
           },
@@ -50,14 +42,6 @@
                   "__TYPE__": "FieldContent",
                   "value": "Priya",
                   "type": "Text"
-                }
-              ],
-              [
-                "avatar_color",
-                {
-                  "__TYPE__": "FieldContent",
-                  "value": "Green",
-                  "type": "Select"
                 }
               ]
             ]
@@ -72,14 +56,6 @@
                   "value": "Diego",
                   "type": "Text"
                 }
-              ],
-              [
-                "avatar_color",
-                {
-                  "__TYPE__": "FieldContent",
-                  "value": "Orange",
-                  "type": "Select"
-                }
               ]
             ]
           },
@@ -92,14 +68,6 @@
                   "__TYPE__": "FieldContent",
                   "value": "Sam",
                   "type": "Text"
-                }
-              ],
-              [
-                "avatar_color",
-                {
-                  "__TYPE__": "FieldContent",
-                  "value": "Purple",
-                  "type": "Select"
                 }
               ]
             ]
