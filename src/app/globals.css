@@ -91,36 +91,6 @@ blockquote {
   @apply italic border-l-4 border-accent pl-4 text-textSecondary;
 }
 
-/* Custom styles for the contact form input fields */
-.label-text {
-  @apply text-sm text-textMain;
-}
-
-.input-custom {
-  @apply w-full rounded-md border border-textSecondary py-3 pr-7 pl-3 text-textSecondary bg-background focus:outline-none focus:border-textMain focus:ring-1 focus:ring-textSecondary transition duration-150;
-}
-
-.input-custom::placeholder {
-  @apply text-highlight;
-}
-
-.input-custom:focus {
-  @apply border-textMain;
-}
-
-/* Custom styles for the contact form input fields */
-.input-custom-large {
-  @apply h-40 w-full rounded-md border border-textSecondary py-3 pr-7 pl-3 text-textSecondary bg-background focus:outline-none focus:border-textMain focus:ring-1 focus:ring-textSecondary transition duration-150;
-}
-
-.input-custom-large::placeholder {
-  @apply text-highlight;
-}
-
-.input-custom-large:focus {
-  @apply border-textMain;
-}
-
 /* navigation components */
 @layer utilities {
   .flex-center {

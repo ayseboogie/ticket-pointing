@@ -7,7 +7,6 @@ import { useCallback, useState } from "react";
 import { debounce } from "lodash";
 import { HeadingWrapper } from "@/components/HeadingWrapper.tsx";
 import Bounded from "@/components/Bounded.tsx";
-import { emailInputGetStarted } from "@/jotai/EmailInput.ts";
 import { router } from "next/client";
 import EmailInput from "@/components/EmailInput/EmailInput.tsx";
 import { Content, isFilled } from "@prismicio/client";
@@ -23,7 +22,6 @@ const emailRegex = new RegExp(
 );
 
 const ImageRight = ({ slice }: ImageRightProps) => {
-  const [, setEmailAddressAtom] = useAtom(emailInputGetStarted);
   // validity state
   const [isEmailValid, setIsEmailValid] = useState(false);
 
@@ -37,7 +35,6 @@ const ImageRight = ({ slice }: ImageRightProps) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSetEmailAddressAtom = useCallback(
     debounce((email) => {
-      setEmailAddressAtom(email);
       setIsEmailValid(emailRegex.test(email));
     }, 250),
     [], // Empty dependency array to ensure the function is only created once
@@ -47,7 +44,7 @@ const ImageRight = ({ slice }: ImageRightProps) => {
     if (isEmailValid) {
       // Proceed with button action
       // Example: navigate to a new page or submit a form
-      router.replace("/Contact");
+      // router.replace("/Contact");
     } else {
       // Handle invalid email address
       alert("Please enter a valid email address.");
