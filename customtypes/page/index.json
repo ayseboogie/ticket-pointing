@@ -74,9 +74,6 @@
             "ticket_pointing": {
               "type": "SharedSlice"
             },
-            "contact": {
-              "type": "SharedSlice"
-            },
             "card_grid": {
               "type": "SharedSlice"
             },
