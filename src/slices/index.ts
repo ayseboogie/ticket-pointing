@@ -6,7 +6,6 @@ export const components = {
   alternate_grid: dynamic(() => import("./AlternateGrid")),
   call_to_action: dynamic(() => import("./CallToAction")),
   card_grid: dynamic(() => import("./CardGrid")),
-  customer_logos: dynamic(() => import("./CustomerLogos")),
   faq: dynamic(() => import("./Faq")),
   features: dynamic(() => import("./Features")),
   hero: dynamic(() => import("./Hero")),
