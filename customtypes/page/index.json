@@ -17,9 +17,6 @@
         "fieldset": "Slice Zone",
         "config": {
           "choices": {
-            "customer_logos": {
-              "type": "SharedSlice"
-            },
             "image_beside_text": {
               "type": "SharedSlice"
             },
@@ -29,16 +26,7 @@
             "features": {
               "type": "SharedSlice"
             },
-            "form": {
-              "type": "SharedSlice"
-            },
-            "testimonials": {
-              "type": "SharedSlice"
-            },
             "team": {
-              "type": "SharedSlice"
-            },
-            "video": {
               "type": "SharedSlice"
             },
             "pricing": {
@@ -48,9 +36,6 @@
               "type": "SharedSlice"
             },
             "job_list": {
-              "type": "SharedSlice"
-            },
-            "logo_cloud": {
               "type": "SharedSlice"
             },
             "hightlighted_text": {
@@ -116,8 +101,8 @@
         "config": {
           "label": "Meta Image",
           "constraint": {
-            "height": "",
-            "width": ""
+            "height": null,
+            "width": null
           },
           "thumbnails": []
         },
