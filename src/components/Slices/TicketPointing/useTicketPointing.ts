@@ -18,18 +18,19 @@ export type PresencePayload = {
 };
 
 // Card values shown in the UI
-export const cardValues = Array.from(
-  { length: 16 },
-  (_, index) => (index + 1) / 2,
-);
+export const cardValues = Array.from({ length: 8 }, (_, index) => index + 1);
 // Allowed avatar colors
 export const colorOptions = [
   "Blue",
   "Green",
+  "Indigo",
+  "Pink",
   "Orange",
   "Purple",
   "Red",
   "Teal",
+  "Amber",
+  "Cyan",
 ];
 
 // Normalize color inputs for comparisons
@@ -39,10 +40,18 @@ export const normalizeColor = (color?: string) =>
 // Tailwind class for participant avatar background
 export const avatarColorClass = (color?: string) => {
   switch (normalizeColor(color)) {
+    case "amber":
+      return "bg-amber-500";
+    case "cyan":
+      return "bg-cyan-500";
     case "green":
       return "bg-emerald-500";
+    case "indigo":
+      return "bg-indigo-500";
     case "orange":
       return "bg-orange-500";
+    case "pink":
+      return "bg-pink-500";
     case "purple":
       return "bg-purple-500";
     case "red":
@@ -57,10 +66,18 @@ export const avatarColorClass = (color?: string) => {
 // Tailwind class for selected buttons/badges
 export const selectedColorClass = (color?: string) => {
   switch (normalizeColor(color)) {
+    case "amber":
+      return "border-amber-500 bg-amber-500 text-white";
+    case "cyan":
+      return "border-cyan-500 bg-cyan-500 text-white";
     case "green":
       return "border-emerald-600 bg-emerald-600 text-white";
+    case "indigo":
+      return "border-indigo-500 bg-indigo-500 text-white";
     case "orange":
       return "border-orange-500 bg-orange-500 text-white";
+    case "pink":
+      return "border-pink-500 bg-pink-500 text-white";
     case "purple":
       return "border-purple-500 bg-purple-500 text-white";
     case "red":
@@ -136,7 +153,6 @@ export const useTicketPointing = (
   // Normalized participant list
   const participants: Participant[] = useMemo(() => {
     const rawParticipants = slice.primary?.participants ?? [];
-
     return rawParticipants
       .map((participant: { name?: string }) => ({
         name: participant.name?.trim() ?? "",
