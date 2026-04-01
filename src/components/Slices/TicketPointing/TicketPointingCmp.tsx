@@ -3,11 +3,14 @@
 import { SliceComponentProps } from "@prismicio/react";
 import type { ImageField } from "@prismicio/client";
 import clsx from "clsx";
+import confetti from "canvas-confetti";
+import { useEffect, useMemo, useRef } from "react";
 import SuspenseImage from "@/components/Suspense/SuspenseImage.tsx";
 import {
   avatarColorClass,
   cardValues,
   colorOptions,
+  normalizeColor,
   selectedColorClass,
   useTicketPointing,
 } from "./useTicketPointing";
@@ -15,6 +18,19 @@ import PointingLoader from "./PointingLoader";
 
 type TicketPointingCmpProps = Pick<SliceComponentProps<any>, "slice"> & {
   footerLogo?: ImageField;
+};
+
+const confettiColorByName: Record<string, string> = {
+  blue: "#3B82F6",
+  green: "#059669",
+  indigo: "#6366F1",
+  pink: "#EC4899",
+  orange: "#F97316",
+  purple: "#A855F7",
+  red: "#8C1E14",
+  teal: "#14B8A6",
+  amber: "#F59E0B",
+  cyan: "#06B6D4",
 };
 
 // UI for the Ticket Pointing room
@@ -34,6 +50,7 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
     colorError,
     selectedValue,
     revealed,
+    roundId,
     connectionState,
     error,
     takenNames,
@@ -49,6 +66,60 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
     handleReveal,
     handleReset,
   } = useTicketPointing(slice);
+  const wasRevealedRef = useRef(false);
+  const unanimousSelection = useMemo(() => {
+    const joinedParticipants = participants.filter((participant) =>
+      Boolean(presenceByName[participant.name]),
+    );
+
+    if (joinedParticipants.length < 2) {
+      return null;
+    }
+
+    const joinedSelections = joinedParticipants.map(
+      (participant) => activeSelections[participant.name],
+    );
+    if (joinedSelections.some((selection) => selection === null)) {
+      return null;
+    }
+
+    const [firstSelection, ...restSelections] = joinedSelections as number[];
+    return restSelections.every((selection) => selection === firstSelection)
+      ? firstSelection
+      : null;
+  }, [participants, presenceByName, activeSelections, roundId]);
+  const confettiColors = useMemo(
+    () =>
+      colorOptions.map(
+        (colorName) =>
+          confettiColorByName[normalizeColor(colorName)] ?? "#3B82F6",
+      ),
+    [],
+  );
+
+  useEffect(() => {
+    const justRevealed = revealed && !wasRevealedRef.current;
+    wasRevealedRef.current = revealed;
+
+    if (!justRevealed || unanimousSelection === null) {
+      return;
+    }
+
+    confetti({
+      particleCount: 140,
+      spread: 80,
+      origin: { y: 0.7 },
+      colors: confettiColors,
+    });
+    window.setTimeout(() => {
+      confetti({
+        particleCount: 100,
+        spread: 100,
+        origin: { y: 0.65 },
+        colors: confettiColors,
+      });
+    }, 180);
+  }, [revealed, unanimousSelection, confettiColors]);
 
   // Avoid SSR/CSR mismatches while the client initializes
   if (!hasMounted) {
