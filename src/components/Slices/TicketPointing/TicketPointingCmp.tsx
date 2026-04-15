@@ -72,18 +72,15 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
       Boolean(presenceByName[participant.name]),
     );
 
-    if (joinedParticipants.length < 2) {
+    const joinedSelections = joinedParticipants
+      .map((participant) => activeSelections[participant.name])
+      .filter((selection): selection is number => selection !== null);
+
+    if (joinedSelections.length < 2) {
       return null;
     }
 
-    const joinedSelections = joinedParticipants.map(
-      (participant) => activeSelections[participant.name],
-    );
-    if (joinedSelections.some((selection) => selection === null)) {
-      return null;
-    }
-
-    const [firstSelection, ...restSelections] = joinedSelections as number[];
+    const [firstSelection, ...restSelections] = joinedSelections;
     return restSelections.every((selection) => selection === firstSelection)
       ? firstSelection
       : null;
