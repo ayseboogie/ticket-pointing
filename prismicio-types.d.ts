@@ -28,7 +28,8 @@ type PickContentRelationshipFieldData<
       TSubRelationship["customtypes"],
       TLang
     >;
-  } & { // Group
+  } & {
+    // Group
     [TGroup in Extract<
       TRelationship["fields"][number],
       | prismic.CustomTypeModelFetchGroupLevel1
@@ -40,7 +41,8 @@ type PickContentRelationshipFieldData<
           PickContentRelationshipFieldData<TGroup, TGroupData, TLang>
         >
       : never;
-  } & { // Other fields
+  } & {
+    // Other fields
     [TFieldKey in Extract<
       TRelationship["fields"][number],
       string
@@ -4279,21 +4281,6 @@ export type TextGridRowSlice = prismic.SharedSlice<
 >;
 
 /**
- * Item in *TicketPointing → Default → Primary → Participants*
- */
-export interface TicketPointingSliceDefaultPrimaryParticipantsItem {
-  /**
-   * Name field in *TicketPointing → Default → Primary → Participants*
-   *
-   * - **Field Type**: Text
-   * - **Placeholder**: Jane
-   * - **API ID Path**: ticket_pointing.default.primary.participants[].name
-   * - **Documentation**: https://prismic.io/docs/fields/text
-   */
-  name: prismic.KeyTextField;
-}
-
-/**
  * Primary content in *TicketPointing → Default → Primary*
  */
 export interface TicketPointingSliceDefaultPrimary {
@@ -4327,18 +4314,6 @@ export interface TicketPointingSliceDefaultPrimary {
    * - **Documentation**: https://prismic.io/docs/fields/boolean
    */
   allow_reveal: prismic.BooleanField;
-
-  /**
-   * Participants field in *TicketPointing → Default → Primary*
-   *
-   * - **Field Type**: Group
-   * - **Placeholder**: *None*
-   * - **API ID Path**: ticket_pointing.default.primary.participants[]
-   * - **Documentation**: https://prismic.io/docs/fields/repeatable-group
-   */
-  participants: prismic.GroupField<
-    Simplify<TicketPointingSliceDefaultPrimaryParticipantsItem>
-  >;
 }
 
 /**
@@ -4552,7 +4527,6 @@ declare module "@prismicio/client" {
       TextGridRowSliceCentered,
       TextGridRowSliceCenteredLinks,
       TicketPointingSlice,
-      TicketPointingSliceDefaultPrimaryParticipantsItem,
       TicketPointingSliceDefaultPrimary,
       TicketPointingSliceVariation,
       TicketPointingSliceDefault,
