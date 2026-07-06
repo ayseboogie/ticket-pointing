@@ -4,7 +4,7 @@ import { SliceComponentProps } from "@prismicio/react";
 import type { ImageField } from "@prismicio/client";
 import clsx from "clsx";
 import confetti from "canvas-confetti";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import SuspenseImage from "@/components/Suspense/SuspenseImage.tsx";
 import {
   avatarColorClass,
@@ -38,35 +38,40 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
   const {
     hasMounted,
     supabase,
-    roomId,
+    roomCode,
+    roomInput,
     roomTitle,
+    shareUrl,
     allowReveal,
     participants,
+    isJoined,
     selectedName,
     selectedColor,
     pendingName,
     pendingColor,
-    isColorModalOpen,
-    colorError,
+    joinError,
     selectedValue,
     revealed,
     roundId,
     connectionState,
     error,
-    takenNames,
     presenceByName,
     activeSelections,
     hasAvailableColor,
     isColorTaken,
-    openColorModal,
-    closeColorModal,
+    isNameTaken,
+    setRoomInput,
+    applyRoomCode,
+    setPendingNameChoice,
     setPendingColorChoice,
     joinRoom,
+    leaveRoom,
     handleSelectValue,
     handleReveal,
     handleReset,
   } = useTicketPointing(slice);
   const wasRevealedRef = useRef(false);
+  const [copied, setCopied] = useState(false);
   const unanimousSelection = useMemo(() => {
     const joinedParticipants = participants.filter((participant) =>
       Boolean(presenceByName[participant.name]),
@@ -118,6 +123,16 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
     }, 180);
   }, [revealed, unanimousSelection, confettiColors]);
 
+  const handleCopyShare = () => {
+    if (!shareUrl || !navigator?.clipboard) {
+      return;
+    }
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    });
+  };
+
   // Avoid SSR/CSR mismatches while the client initializes
   if (!hasMounted) {
     return (
@@ -153,7 +168,7 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
           <div className="flex items-center gap-4 sm:gap-6">
             <div>
               <p className="text-xs uppercase tracking-wide text-slate-400">
-                {roomId}
+                Room · {roomCode}
               </p>
               <h2 className="text-2xl font-semibold text-slate-900">
                 {roomTitle}
@@ -197,35 +212,161 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
           </div>
         </div>
 
-        {/* Join flow: pick a name to claim */}
+        {/* Team room switcher: each room is an isolated, shareable session */}
         <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50 p-4">
           <p className="text-sm font-medium text-slate-700">
-            Select your name to join the room.
+            Team room — share this room with your team so you all point
+            together.
           </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {participants.map((participant) => {
-              const isTaken = takenNames.has(participant.name);
-              const isSelected = participant.name === selectedName;
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label className="flex-1">
+              <span className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                Room code
+              </span>
+              <input
+                type="text"
+                value={roomInput}
+                onChange={(event) => setRoomInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    applyRoomCode();
+                  }
+                }}
+                placeholder="team-alpha"
+                className="mt-1 w-full rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-800 focus:border-slate-400 focus:outline-none"
+              />
+            </label>
+            <button
+              type="button"
+              className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300"
+              onClick={() => applyRoomCode()}
+            >
+              Switch room
+            </button>
+            <button
+              type="button"
+              className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300"
+              onClick={handleCopyShare}
+            >
+              {copied ? "Link copied!" : "Copy invite link"}
+            </button>
+          </div>
+        </div>
 
-              return (
+        {/* Join flow: type your own name + pick a color */}
+        <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50 p-4">
+          {isJoined ? (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span
+                  className={clsx(
+                    "flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold text-white",
+                    avatarColorClass(selectedColor),
+                  )}
+                >
+                  {selectedName?.slice(0, 1).toUpperCase()}
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">
+                    You&apos;re in as {selectedName}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    Pick a card below to cast your point.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300"
+                onClick={leaveRoom}
+              >
+                Leave
+              </button>
+            </div>
+          ) : (
+            <div>
+              <p className="text-sm font-medium text-slate-700">
+                Enter your name to join the room.
+              </p>
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <input
+                  type="text"
+                  value={pendingName}
+                  onChange={(event) => setPendingNameChoice(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      joinRoom();
+                    }
+                  }}
+                  placeholder="Your name"
+                  maxLength={40}
+                  className={clsx(
+                    "w-full rounded-full border px-4 py-2 text-sm text-slate-800 focus:outline-none sm:max-w-xs",
+                    pendingName.trim() && isNameTaken(pendingName)
+                      ? "border-red-300 focus:border-red-400"
+                      : "border-slate-200 focus:border-slate-400",
+                  )}
+                />
                 <button
-                  key={participant.name}
                   type="button"
                   className={clsx(
-                    "rounded-full border px-3 py-1 text-sm font-medium transition",
-                    isSelected
-                      ? selectedColorClass(selectedColor)
-                      : "border-slate-200 text-slate-700 hover:border-slate-300",
-                    isTaken ? "cursor-not-allowed opacity-50" : "",
+                    "rounded-full border px-5 py-2 text-sm font-medium transition",
+                    pendingName.trim() &&
+                      !isNameTaken(pendingName) &&
+                      !isColorTaken(pendingColor) &&
+                      hasAvailableColor
+                      ? selectedColorClass(pendingColor)
+                      : "cursor-not-allowed border-slate-100 text-slate-300",
                   )}
-                  disabled={isTaken}
-                  onClick={() => openColorModal(participant.name)}
+                  disabled={
+                    !pendingName.trim() ||
+                    isNameTaken(pendingName) ||
+                    isColorTaken(pendingColor) ||
+                    !hasAvailableColor
+                  }
+                  onClick={joinRoom}
                 >
-                  {participant.name}
+                  Join
                 </button>
-              );
-            })}
-          </div>
+              </div>
+              <p className="mt-4 text-xs font-medium uppercase tracking-wide text-slate-400">
+                Pick your color
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {colorOptions.map((color) => {
+                  const taken = isColorTaken(color);
+                  const isSelected = pendingColor === color;
+
+                  return (
+                    <button
+                      key={color}
+                      type="button"
+                      className={clsx(
+                        "rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide transition",
+                        isSelected
+                          ? selectedColorClass(color)
+                          : "border-slate-200 text-slate-600 hover:border-slate-300",
+                        taken ? "cursor-not-allowed opacity-40" : "",
+                      )}
+                      disabled={taken}
+                      onClick={() => setPendingColorChoice(color)}
+                    >
+                      {color}
+                    </button>
+                  );
+                })}
+              </div>
+              {joinError ? (
+                <p className="mt-3 text-sm text-red-600">{joinError}</p>
+              ) : null}
+              {!hasAvailableColor ? (
+                <p className="mt-3 text-sm text-red-600">
+                  All colors are currently taken. Please wait for one to free
+                  up.
+                </p>
+              ) : null}
+            </div>
+          )}
         </div>
 
         {/* Card selection (local + presence-driven) */}
@@ -254,138 +395,71 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
         {/* Room status: who joined + selection state */}
         <div className="mt-8">
           <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Participants
+            Participants ({participants.length})
           </h3>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {participants.map((participant) => {
-              const selection = activeSelections[participant.name];
-              const presence = presenceByName[participant.name];
-              const isJoined = Boolean(presence);
-              const showValue = revealed && selection !== null;
-              const displayColor = presence?.color;
-
-              return (
-                <div
-                  key={participant.name}
-                  className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={clsx(
-                        "h-10 w-10 rounded-full text-sm font-semibold",
-                        displayColor
-                          ? clsx("text-white", avatarColorClass(displayColor))
-                          : "bg-slate-100 text-slate-400",
-                      )}
-                    >
-                      <span className="flex h-full w-full items-center justify-center">
-                        {participant.name.slice(0, 1).toUpperCase()}
-                      </span>
-                    </span>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-800">
-                        {participant.name}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {isJoined ? "Joined" : "Not joined"}
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    className={clsx(
-                      "min-w-[64px] rounded-full px-3 py-1 text-center text-sm font-semibold",
-                      showValue
-                        ? "bg-slate-900 text-white"
-                        : selection !== null
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-slate-100 text-slate-400",
-                    )}
-                  >
-                    {showValue
-                      ? selection
-                      : selection !== null
-                        ? "Selected"
-                        : "—"}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-      {/* Join modal: color selection */}
-      {isColorModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-slate-900">
-              Choose your color
-            </h3>
-            <p className="mt-1 text-sm text-slate-500">
-              Pick a color for {pendingName ?? "your name"}.
+          {participants.length === 0 ? (
+            <p className="mt-4 text-sm text-slate-400">
+              No one has joined yet. Be the first to enter your name above.
             </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {colorOptions.map((color) => {
-                const taken = isColorTaken(color);
-                const isSelected = pendingColor === color;
+          ) : (
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {participants.map((participant) => {
+                const selection = activeSelections[participant.name];
+                const presence = presenceByName[participant.name];
+                const participantJoined = Boolean(presence);
+                const showValue = revealed && selection !== null;
+                const displayColor = presence?.color;
 
                 return (
-                  <button
-                    key={color}
-                    type="button"
-                    className={clsx(
-                      "rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide transition",
-                      isSelected
-                        ? selectedColorClass(color)
-                        : "border-slate-200 text-slate-600 hover:border-slate-300",
-                      taken ? "cursor-not-allowed opacity-40" : "",
-                    )}
-                    disabled={taken}
-                    onClick={() => setPendingColorChoice(color)}
+                  <div
+                    key={participant.name}
+                    className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3"
                   >
-                    {color}
-                  </button>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={clsx(
+                          "h-10 w-10 rounded-full text-sm font-semibold",
+                          displayColor
+                            ? clsx("text-white", avatarColorClass(displayColor))
+                            : "bg-slate-100 text-slate-400",
+                        )}
+                      >
+                        <span className="flex h-full w-full items-center justify-center">
+                          {participant.name.slice(0, 1).toUpperCase()}
+                        </span>
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">
+                          {participant.name}
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          {participantJoined ? "Joined" : "Not joined"}
+                        </p>
+                      </div>
+                    </div>
+                    <div
+                      className={clsx(
+                        "min-w-[64px] rounded-full px-3 py-1 text-center text-sm font-semibold",
+                        showValue
+                          ? "bg-slate-900 text-white"
+                          : selection !== null
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-slate-100 text-slate-400",
+                      )}
+                    >
+                      {showValue
+                        ? selection
+                        : selection !== null
+                          ? "Selected"
+                          : "—"}
+                    </div>
+                  </div>
                 );
               })}
             </div>
-            {colorError ? (
-              <p className="mt-3 text-sm text-red-600">{colorError}</p>
-            ) : null}
-            {!hasAvailableColor ? (
-              <p className="mt-3 text-sm text-red-600">
-                All colors are currently taken. Please wait for one to free up.
-              </p>
-            ) : null}
-            <div className="mt-5 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300"
-                onClick={closeColorModal}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={clsx(
-                  "rounded-full border px-4 py-2 text-sm font-medium transition",
-                  pendingName &&
-                    !isColorTaken(pendingColor) &&
-                    hasAvailableColor
-                    ? selectedColorClass(pendingColor)
-                    : "cursor-not-allowed border-slate-100 text-slate-300",
-                )}
-                disabled={
-                  !pendingName ||
-                  isColorTaken(pendingColor) ||
-                  !hasAvailableColor
-                }
-                onClick={joinRoom}
-              >
-                Join
-              </button>
-            </div>
-          </div>
+          )}
         </div>
-      ) : null}
+      </div>
     </section>
   );
 };
