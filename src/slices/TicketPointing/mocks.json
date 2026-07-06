@@ -16,63 +16,6 @@
       "allow_reveal": {
         "__TYPE__": "BooleanContent",
         "value": true
-      },
-      "participants": {
-        "__TYPE__": "GroupContentType",
-        "value": [
-          {
-            "__TYPE__": "GroupItemContent",
-            "value": [
-              [
-                "name",
-                {
-                  "__TYPE__": "FieldContent",
-                  "value": "Gretchen",
-                  "type": "Text"
-                }
-              ]
-            ]
-          },
-          {
-            "__TYPE__": "GroupItemContent",
-            "value": [
-              [
-                "name",
-                {
-                  "__TYPE__": "FieldContent",
-                  "value": "Keith",
-                  "type": "Text"
-                }
-              ]
-            ]
-          },
-          {
-            "__TYPE__": "GroupItemContent",
-            "value": [
-              [
-                "name",
-                {
-                  "__TYPE__": "FieldContent",
-                  "value": "Nikita",
-                  "type": "Text"
-                }
-              ]
-            ]
-          },
-          {
-            "__TYPE__": "GroupItemContent",
-            "value": [
-              [
-                "name",
-                {
-                  "__TYPE__": "FieldContent",
-                  "value": "Other",
-                  "type": "Text"
-                }
-              ]
-            ]
-          }
-        ]
       }
     },
     "items": []

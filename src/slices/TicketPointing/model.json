@@ -32,22 +32,6 @@
             "label": "Allow Reveal",
             "default_value": true
           }
-        },
-        "participants": {
-          "type": "Group",
-          "config": {
-            "label": "Participants",
-            "repeat": true,
-            "fields": {
-              "name": {
-                "type": "Text",
-                "config": {
-                  "label": "Name",
-                  "placeholder": "Jane"
-                }
-              }
-            }
-          }
         }
       },
       "items": {}
