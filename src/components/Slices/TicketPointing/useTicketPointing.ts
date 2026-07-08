@@ -284,18 +284,30 @@ export const useTicketPointing = (
       setPresenceByClientId(nextPresence);
     });
 
-    // New joiners request the latest round/reveal state
-    channel.on("broadcast", { event: "state-request" }, () => {
+    // New joiners request the latest round/reveal state; reply addressed to
+    // the requester only, so established clients never adopt each other's
+    // state from these replies.
+    channel.on("broadcast", { event: "state-request" }, ({ payload }) => {
       channel.send({
         type: "broadcast",
         event: "state-sync",
-        payload: { revealed: revealedRef.current, roundId: roundIdRef.current },
+        payload: {
+          revealed: revealedRef.current,
+          roundId: roundIdRef.current,
+          target: payload?.requesterId ?? null,
+        },
       });
     });
 
     // Apply room state updates from other clients
     channel.on("broadcast", { event: "state-sync" }, ({ payload }) => {
       if (!payload) {
+        return;
+      }
+
+      // Targeted replies (join handshake) are only for the requester;
+      // untargeted syncs (reveal/reset) apply to everyone.
+      if (payload.target && payload.target !== clientId) {
         return;
       }
 
@@ -326,7 +338,7 @@ export const useTicketPointing = (
         channel.send({
           type: "broadcast",
           event: "state-request",
-          payload: {},
+          payload: { requesterId: clientId },
         });
       }
 
@@ -518,9 +530,11 @@ export const useTicketPointing = (
       return;
     }
 
+    // Keep the room's current roundId (adopted via the join handshake) so
+    // this client's votes are visible to everyone else. Minting a new local
+    // roundId here would desync selections across clients.
     setSelectedColor(pendingColor);
     setSelectedName(name);
-    setRoundId(createRoundId());
     setSelectedValue(null);
     setJoinError(null);
   };
