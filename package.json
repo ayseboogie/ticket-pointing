@@ -54,7 +54,7 @@
     "reaptcha": "^1.12.1"
   },
   "devDependencies": {
-    "@slicemachine/adapter-next": "^0.3.94",
+    "@slicemachine/adapter-next": "0.3.96",
     "@types/canvas-confetti": "^1.9.0",
     "@types/gtag.js": "^0.0.20",
     "@types/lodash": "^4.17.15",
@@ -70,7 +70,7 @@
     "postcss": "^8.5.1",
     "prettier": "3.5.0",
     "react-email": "3.0.7",
-    "slice-machine-ui": "^2.21.0",
+    "slice-machine-ui": "2.21.3",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.7.3"
   },
