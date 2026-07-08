@@ -94,13 +94,47 @@ export const selectedColorClass = (color?: string) => {
   }
 };
 
-// Unique IDs for rounds and clients
-const createRoundId = () => {
+// Unique client IDs for presence tracking
+const createClientId = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
   }
 
   return String(Date.now());
+};
+
+// Orderable round IDs: "epoch.mintedAt.random". Resets bump the epoch so a
+// newer reset always wins; within an epoch the earliest-minted round wins, so
+// simultaneous resets converge on the same winner on every client.
+export const createRoundId = (epoch = 0) =>
+  `${String(epoch).padStart(8, "0")}.${String(Date.now()).padStart(15, "0")}.${createClientId()}`;
+
+export const parseRoundId = (roundId: string) => {
+  const [epoch, mintedAt] = roundId.split(".");
+  return { epoch: Number(epoch) || 0, mintedAt: Number(mintedAt) || 0 };
+};
+
+// Whether candidate should replace current as the room's active round. The
+// empty string is the shared "primordial" round every client starts in; any
+// real round beats it, and it never beats anything.
+export const roundIdBeats = (candidate: string, current: string) => {
+  if (!candidate || candidate === current) {
+    return false;
+  }
+  if (!current) {
+    return true;
+  }
+
+  const a = parseRoundId(candidate);
+  const b = parseRoundId(current);
+  if (a.epoch !== b.epoch) {
+    return a.epoch > b.epoch;
+  }
+  if (a.mintedAt !== b.mintedAt) {
+    return a.mintedAt < b.mintedAt;
+  }
+
+  return candidate < current;
 };
 
 // Sanitize a room code so it works safely inside a channel name / URL
@@ -186,9 +220,12 @@ export const useTicketPointing = (
   const [joinError, setJoinError] = useState<string | null>(null);
   const [selectedValue, setSelectedValue] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
-  const [roundId, setRoundId] = useState(createRoundId);
+  // Current round. Starts as the shared primordial round (""), so clients
+  // that load an empty room at the same time are already converged; real
+  // round IDs are only minted by resets.
+  const [roundId, setRoundId] = useState("");
   // Stable client ID for presence tracking
-  const clientId = useMemo(() => createRoundId(), []);
+  const clientId = useMemo(() => createClientId(), []);
   // Raw presence state keyed by clientId
   const [presenceByClientId, setPresenceByClientId] = useState<
     Record<string, PresencePayload>
@@ -282,6 +319,24 @@ export const useTicketPointing = (
       });
 
       setPresenceByClientId(nextPresence);
+
+      // Converge on the winning round advertised by peers. Heals clients
+      // that missed a reset broadcast (e.g. after a brief reconnect).
+      let bestRoundId = roundIdRef.current;
+      Object.values(nextPresence).forEach((presence) => {
+        if (
+          typeof presence.roundId === "string" &&
+          roundIdBeats(presence.roundId, bestRoundId)
+        ) {
+          bestRoundId = presence.roundId;
+        }
+      });
+      if (bestRoundId !== roundIdRef.current) {
+        roundIdRef.current = bestRoundId;
+        setRoundId(bestRoundId);
+        setSelectedValue(null);
+        setRevealed(false);
+      }
     });
 
     // New joiners request the latest round/reveal state; reply addressed to
@@ -311,16 +366,26 @@ export const useTicketPointing = (
         return;
       }
 
-      if (typeof payload.revealed === "boolean") {
-        setRevealed(payload.revealed);
+      const incomingRoundId =
+        typeof payload.roundId === "string" ? payload.roundId : null;
+
+      if (
+        incomingRoundId &&
+        roundIdBeats(incomingRoundId, roundIdRef.current)
+      ) {
+        roundIdRef.current = incomingRoundId;
+        setRoundId(incomingRoundId);
+        setSelectedValue(null);
       }
 
-      if (typeof payload.roundId === "string") {
-        const isNewRound = payload.roundId !== roundIdRef.current;
-        setRoundId(payload.roundId);
-        if (isNewRound) {
-          setSelectedValue(null);
-        }
+      // Only apply the revealed flag when the message refers to the round we
+      // are (now) on, so a laggy reply about a superseded round can't
+      // reveal or hide the current one.
+      if (
+        typeof payload.revealed === "boolean" &&
+        (!incomingRoundId || incomingRoundId === roundIdRef.current)
+      ) {
+        setRevealed(payload.revealed);
       }
     });
 
@@ -488,7 +553,10 @@ export const useTicketPointing = (
       return;
     }
 
-    const nextRoundId = createRoundId();
+    // Bump the epoch so this reset beats the current round on every client,
+    // even under concurrent resets or skewed clocks.
+    const nextRoundId = createRoundId(parseRoundId(roundId).epoch + 1);
+    roundIdRef.current = nextRoundId;
     setSelectedValue(null);
     setRevealed(false);
     setRoundId(nextRoundId);
@@ -554,12 +622,13 @@ export const useTicketPointing = (
       return;
     }
 
-    // Reset all room-scoped state before reconnecting to the new channel
+    // Reset all room-scoped state before reconnecting to the new channel;
+    // back to the primordial round until the new room's state is adopted
     setSelectedName(null);
     setSelectedValue(null);
     setRevealed(false);
     setPresenceByClientId({});
-    setRoundId(createRoundId());
+    setRoundId("");
     setJoinError(null);
     setRoomInput(nextCode);
     setRoomCode(nextCode);
