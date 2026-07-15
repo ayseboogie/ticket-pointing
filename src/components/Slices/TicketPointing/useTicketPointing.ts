@@ -34,7 +34,7 @@ export const decks: Record<DeckId, number[]> = {
 };
 
 export const deckOptions: { id: DeckId; label: string }[] = [
-  { id: "standard", label: "Standard (1–8)" },
+  { id: "standard", label: "Standard" },
   { id: "fibonacci", label: "Fibonacci" },
 ];
 
