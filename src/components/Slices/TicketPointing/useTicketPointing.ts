@@ -188,9 +188,7 @@ export const normalizeRoomCode = (code?: string) =>
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
 
-// Per-browser preference: remember the user's last room between visits. (The
-// deck is not remembered per-browser — it is shared room state, so a personal
-// default would either hijack an established room or diverge between clients.)
+// Per-browser preference: remember the user's last room between visits.
 const ROOM_STORAGE_KEY = "ticket-pointing:last-room";
 
 const readStoredValue = (key: string): string | null => {
@@ -213,6 +211,62 @@ const writeStoredValue = (key: string, value: string) => {
   } catch {
     // Ignore write failures (private mode / storage disabled)
   }
+};
+
+// Per-browser, per-room deck memory. The deck IS shared room state, but we
+// still remember — per room — the last deck decision this browser saw (deck +
+// its version stamp) so reopening a room restores its number system right away.
+// The stamp is stored alongside the deck, so on reconnect the room's normal
+// last-write-wins convergence still settles ties: a peer holding a newer
+// decision wins, and this browser only re-propagates its stored deck when that
+// decision is genuinely the most recent one known.
+const ROOM_DECKS_STORAGE_KEY = "ticket-pointing:room-decks";
+
+type StoredDeck = { deck: DeckId; deckStamp: string };
+
+const readStoredRoomDecks = (): Record<string, StoredDeck> => {
+  const raw = readStoredValue(ROOM_DECKS_STORAGE_KEY);
+  if (!raw) {
+    return {};
+  }
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") {
+      return {};
+    }
+    const result: Record<string, StoredDeck> = {};
+    Object.entries(parsed as Record<string, unknown>).forEach(
+      ([room, value]) => {
+        if (
+          value &&
+          typeof value === "object" &&
+          isDeckId((value as Record<string, unknown>).deck) &&
+          typeof (value as Record<string, unknown>).deckStamp === "string"
+        ) {
+          result[room] = {
+            deck: (value as StoredDeck).deck,
+            deckStamp: (value as StoredDeck).deckStamp,
+          };
+        }
+      },
+    );
+    return result;
+  } catch {
+    return {};
+  }
+};
+
+const readStoredRoomDeck = (roomCode: string): StoredDeck | null =>
+  readStoredRoomDecks()[roomCode] ?? null;
+
+const writeStoredRoomDeck = (
+  roomCode: string,
+  deck: DeckId,
+  deckStamp: string,
+) => {
+  const stored = readStoredRoomDecks();
+  stored[roomCode] = { deck, deckStamp };
+  writeStoredValue(ROOM_DECKS_STORAGE_KEY, JSON.stringify(stored));
 };
 
 type ConnectionState = "idle" | "connecting" | "connected" | "error";
@@ -366,6 +420,18 @@ export const useTicketPointing = (
       setRoomCode(initialRoom);
       setRoomInput(initialRoom);
     }
+
+    // Restore this room's remembered deck (number system) for this browser, so
+    // reopening the room lands on the same deck instead of resetting to
+    // standard. Live convergence still runs once connected.
+    const storedDeck = readStoredRoomDeck(initialRoom || roomCode);
+    if (storedDeck) {
+      deckRef.current = storedDeck.deck;
+      deckStampRef.current = storedDeck.deckStamp;
+      setDeckState(storedDeck.deck);
+      setDeckStamp(storedDeck.deckStamp);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -388,6 +454,16 @@ export const useTicketPointing = (
     // Remember this room so it reopens on the user's next visit
     writeStoredValue(ROOM_STORAGE_KEY, roomCode);
   }, [hasMounted, roomCode]);
+
+  // Remember this room's deck for this browser so it reopens on the same number
+  // system. Only real (non-primordial) deck decisions are persisted; the empty
+  // stamp is the default that reading nothing already yields.
+  useEffect(() => {
+    if (!hasMounted || !deckStamp) {
+      return;
+    }
+    writeStoredRoomDeck(roomCode, deck, deckStamp);
+  }, [hasMounted, roomCode, deck, deckStamp]);
 
   // Join Supabase realtime room: presence + broadcast
   useEffect(() => {
@@ -812,11 +888,13 @@ export const useTicketPointing = (
     setRevealed(false);
     setPresenceByClientId({});
     setRoundId("");
-    // Back to the primordial deck until the new room's deck is adopted
-    setDeckState("standard");
-    setDeckStamp("");
-    deckRef.current = "standard";
-    deckStampRef.current = "";
+    // Restore the target room's remembered deck for this browser (falling back
+    // to the primordial deck), then let the room's live convergence take over.
+    const storedDeck = readStoredRoomDeck(nextCode);
+    setDeckState(storedDeck?.deck ?? "standard");
+    setDeckStamp(storedDeck?.deckStamp ?? "");
+    deckRef.current = storedDeck?.deck ?? "standard";
+    deckStampRef.current = storedDeck?.deckStamp ?? "";
     setJoinError(null);
     setRoomInput(nextCode);
     setRoomCode(nextCode);
