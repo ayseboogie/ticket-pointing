@@ -8,7 +8,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import SuspenseImage from "@/components/Suspense/SuspenseImage.tsx";
 import {
   avatarColorClass,
-  cardValues,
   colorOptions,
   normalizeColor,
   selectedColorClass,
@@ -58,6 +57,10 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
     presenceByName,
     activeSelections,
     hasAvailableColor,
+    cardValues,
+    deck,
+    deckOptions,
+    setDeck,
     isColorTaken,
     isNameTaken,
     setRoomInput,
@@ -371,6 +374,27 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
 
         {/* Card selection (local + presence-driven) */}
         <div className="mt-6">
+          {/* Deck picker — remembered per browser */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium uppercase tracking-wide text-slate-400">
+              Deck
+            </span>
+            {deckOptions.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                className={clsx(
+                  "rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide transition",
+                  deck === option.id
+                    ? "border-slate-900 bg-slate-900 text-white"
+                    : "border-slate-200 text-slate-600 hover:border-slate-300",
+                )}
+                onClick={() => setDeck(option.id)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
           <div className="mt-3 grid grid-cols-4 gap-3 sm:grid-cols-8">
             {cardValues.map((value) => (
               <button
