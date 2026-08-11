@@ -191,6 +191,20 @@ export const normalizeRoomCode = (code?: string) =>
 // Per-browser preference: remember the user's last room between visits.
 const ROOM_STORAGE_KEY = "ticket-pointing:last-room";
 
+// Stable browser identity so a refresh reuses the same presence key instead of
+// appearing as a brand-new client in the room.
+const CLIENT_ID_STORAGE_KEY = "ticket-pointing:client-id";
+
+// Per-room display name + color so refresh can auto-rejoin the same seat.
+const ROOM_IDENTITY_STORAGE_KEY = "ticket-pointing:room-identity";
+
+type StoredIdentity = {
+  name: string;
+  color: string;
+  selectedValue?: number | null;
+  roundId?: string;
+};
+
 const readStoredValue = (key: string): string | null => {
   if (typeof window === "undefined") {
     return null;
@@ -211,6 +225,73 @@ const writeStoredValue = (key: string, value: string) => {
   } catch {
     // Ignore write failures (private mode / storage disabled)
   }
+};
+
+const getOrCreateStoredClientId = () => {
+  const stored = readStoredValue(CLIENT_ID_STORAGE_KEY);
+  if (stored) {
+    return stored;
+  }
+  const id = createClientId();
+  writeStoredValue(CLIENT_ID_STORAGE_KEY, id);
+  return id;
+};
+
+const readStoredRoomIdentities = (): Record<string, StoredIdentity> => {
+  const raw = readStoredValue(ROOM_IDENTITY_STORAGE_KEY);
+  if (!raw) {
+    return {};
+  }
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") {
+      return {};
+    }
+    const result: Record<string, StoredIdentity> = {};
+    Object.entries(parsed as Record<string, unknown>).forEach(
+      ([room, value]) => {
+        if (
+          value &&
+          typeof value === "object" &&
+          typeof (value as Record<string, unknown>).name === "string" &&
+          typeof (value as Record<string, unknown>).color === "string"
+        ) {
+          const name = (value as StoredIdentity).name.trim();
+          const color = (value as StoredIdentity).color.trim();
+          if (name && color) {
+            result[room] = { name, color };
+          }
+        }
+      },
+    );
+    return result;
+  } catch {
+    return {};
+  }
+};
+
+const readStoredRoomIdentity = (roomCode: string): StoredIdentity | null =>
+  readStoredRoomIdentities()[roomCode] ?? null;
+
+const writeStoredRoomIdentity = (
+  roomCode: string,
+  name: string,
+  color: string,
+  selectedValue: number | null = null,
+  roundId = "",
+) => {
+  const stored = readStoredRoomIdentities();
+  stored[roomCode] = { name, color, selectedValue, roundId };
+  writeStoredValue(ROOM_IDENTITY_STORAGE_KEY, JSON.stringify(stored));
+};
+
+const clearStoredRoomIdentity = (roomCode: string) => {
+  const stored = readStoredRoomIdentities();
+  if (!(roomCode in stored)) {
+    return;
+  }
+  delete stored[roomCode];
+  writeStoredValue(ROOM_IDENTITY_STORAGE_KEY, JSON.stringify(stored));
 };
 
 // Per-browser, per-room deck memory. The deck IS shared room state, but we
@@ -306,6 +387,7 @@ type TicketPointingHookResult = {
   setPendingColorChoice: (color: string) => void;
   joinRoom: () => void;
   leaveRoom: () => void;
+  canChangeDeck: boolean;
   handleSelectValue: (value: number) => void;
   handleReveal: () => void;
   handleReset: () => void;
@@ -356,8 +438,9 @@ export const useTicketPointing = (
   // that load an empty room at the same time are already converged; real
   // round IDs are only minted by resets.
   const [roundId, setRoundId] = useState("");
-  // Stable client ID for presence tracking
-  const clientId = useMemo(() => createClientId(), []);
+  // Stable client ID for presence tracking (persisted so refresh reuses the
+  // same seat instead of minting a new anonymous client).
+  const clientId = useMemo(() => getOrCreateStoredClientId(), []);
   // Raw presence state keyed by clientId
   const [presenceByClientId, setPresenceByClientId] = useState<
     Record<string, PresencePayload>
@@ -365,6 +448,10 @@ export const useTicketPointing = (
   const [connectionState, setConnectionState] =
     useState<ConnectionState>("idle");
   const [error, setError] = useState<string | null>(null);
+  // True after the first presence sync for the current channel subscription.
+  const [presenceReady, setPresenceReady] = useState(false);
+  // Prevents auto-rejoin from retrying forever when the stored seat is taken.
+  const autoRejoinAttemptedRef = useRef<string | null>(null);
 
   // Refs used inside realtime callbacks so the channel subscribes once per
   // room and never has to reconnect just because local state changed.
@@ -419,6 +506,14 @@ export const useTicketPointing = (
     if (initialRoom) {
       setRoomCode(initialRoom);
       setRoomInput(initialRoom);
+    }
+
+    // Prefill join form from this browser's last seat so refresh feels like
+    // returning to the same room even before auto-rejoin completes.
+    const storedIdentity = readStoredRoomIdentity(initialRoom || roomCode);
+    if (storedIdentity) {
+      setPendingName(storedIdentity.name);
+      setPendingColor(storedIdentity.color);
     }
 
     // Restore this room's remembered deck (number system) for this browser, so
@@ -477,6 +572,7 @@ export const useTicketPointing = (
 
     channelRef.current = channel;
     setConnectionState("connecting");
+    setPresenceReady(false);
 
     // Presence sync: rebuild clientId -> presence map
     channel.on("presence", { event: "sync" }, () => {
@@ -492,6 +588,7 @@ export const useTicketPointing = (
       });
 
       setPresenceByClientId(nextPresence);
+      setPresenceReady(true);
 
       // Converge on the winning round advertised by peers. Heals clients
       // that missed a reset broadcast (e.g. after a brief reconnect).
@@ -744,6 +841,116 @@ export const useTicketPointing = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usedColors, selectedName]);
 
+  // Prefill + auto-rejoin using the identity this browser last used in the room.
+  // Waits until presence has synced so we don't steal a name someone else holds.
+  useEffect(() => {
+    if (selectedName || connectionState !== "connected" || !presenceReady) {
+      return;
+    }
+
+    const identity = readStoredRoomIdentity(roomCode);
+    if (!identity) {
+      return;
+    }
+
+    // Always restore the join form so a failed auto-rejoin still feels like
+    // the same room (same name/color ready to submit).
+    setPendingName(identity.name);
+    if (
+      !isColorTaken(identity.color) ||
+      normalizeColor(identity.color) === normalizeColor(pendingColor)
+    ) {
+      setPendingColor(identity.color);
+    }
+
+    if (autoRejoinAttemptedRef.current === roomCode) {
+      return;
+    }
+    autoRejoinAttemptedRef.current = roomCode;
+
+    if (isNameTaken(identity.name)) {
+      setJoinError(
+        "Your previous name is already taken in this room. Pick another to rejoin.",
+      );
+      return;
+    }
+
+    const color = isColorTaken(identity.color)
+      ? getAvailableColor()
+      : identity.color;
+
+    if (isColorTaken(color)) {
+      setJoinError("All colors are currently taken. Please wait for one.");
+      return;
+    }
+
+    setPendingColor(color);
+    setSelectedColor(color);
+    setSelectedName(identity.name);
+    setJoinError(null);
+    writeStoredRoomIdentity(
+      roomCode,
+      identity.name,
+      color,
+      identity.selectedValue ?? null,
+      identity.roundId ?? "",
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    connectionState,
+    presenceReady,
+    roomCode,
+    presenceByClientId,
+    selectedName,
+  ]);
+
+  // After auto-rejoin (or a manual join that restored storage), put back the
+  // vote for the still-active round so a refresh doesn't wipe a cast point.
+  useEffect(() => {
+    if (!selectedName || selectedValue !== null) {
+      return;
+    }
+
+    const identity = readStoredRoomIdentity(roomCode);
+    if (
+      !identity ||
+      normalizeName(identity.name) !== normalizeName(selectedName) ||
+      identity.roundId !== roundId ||
+      typeof identity.selectedValue !== "number"
+    ) {
+      return;
+    }
+
+    if (!decks[deck].includes(identity.selectedValue)) {
+      return;
+    }
+
+    // Don't resurrect a vote into a revealed round from a stale tab if the
+    // room already moved on — matching roundId above covers the common case.
+    setSelectedValue(identity.selectedValue);
+  }, [selectedName, selectedValue, roomCode, roundId, deck]);
+
+  // Keep the persisted seat in sync while joined (name/color/vote/round).
+  useEffect(() => {
+    if (!hasMounted || !selectedName) {
+      return;
+    }
+    writeStoredRoomIdentity(
+      roomCode,
+      selectedName,
+      selectedColor,
+      selectedValue,
+      roundId,
+    );
+  }, [
+    hasMounted,
+    roomCode,
+    selectedName,
+    selectedColor,
+    selectedValue,
+    roundId,
+  ]);
+
   // Selection visibility scoped to current round
   const activeSelections = useMemo(() => {
     const selectionMap: Record<string, number | null> = {};
@@ -763,6 +970,21 @@ export const useTicketPointing = (
 
   const isJoined = Boolean(selectedName);
 
+  // Standard ↔ Fibonacci can still be flipped at the start of a round. Once
+  // anyone has pointed (or scores are revealed), lock the deck until Reset so
+  // one person can't yank the number system out from under everyone else.
+  const canChangeDeck = useMemo(() => {
+    if (revealed) {
+      return false;
+    }
+    if (selectedValue !== null) {
+      return false;
+    }
+    return !Object.values(activeSelections).some(
+      (selection) => selection !== null,
+    );
+  }, [revealed, selectedValue, activeSelections]);
+
   // Local selection; presence is updated via effect
   const handleSelectValue = (value: number) => {
     setSelectedValue(value);
@@ -772,7 +994,7 @@ export const useTicketPointing = (
   // broadcast so every client converges (last-write-wins). Clears a selection
   // the new deck no longer offers.
   const setDeck = (next: DeckId) => {
-    if (next === deckRef.current) {
+    if (!canChangeDeck || next === deckRef.current) {
       return;
     }
 
@@ -864,10 +1086,13 @@ export const useTicketPointing = (
     setSelectedName(name);
     setSelectedValue(null);
     setJoinError(null);
+    writeStoredRoomIdentity(roomCode, name, pendingColor, null, roundId);
   };
 
   // Leave the room (frees the name/color for others)
   const leaveRoom = () => {
+    clearStoredRoomIdentity(roomCode);
+    autoRejoinAttemptedRef.current = roomCode;
     setSelectedName(null);
     setSelectedValue(null);
     setJoinError(null);
@@ -888,6 +1113,7 @@ export const useTicketPointing = (
     setRevealed(false);
     setPresenceByClientId({});
     setRoundId("");
+    autoRejoinAttemptedRef.current = null;
     // Restore the target room's remembered deck for this browser (falling back
     // to the primordial deck), then let the room's live convergence take over.
     const storedDeck = readStoredRoomDeck(nextCode);
@@ -895,6 +1121,10 @@ export const useTicketPointing = (
     setDeckStamp(storedDeck?.deckStamp ?? "");
     deckRef.current = storedDeck?.deck ?? "standard";
     deckStampRef.current = storedDeck?.deckStamp ?? "";
+    // Prefill join form from this browser's last seat in the target room.
+    const storedIdentity = readStoredRoomIdentity(nextCode);
+    setPendingName(storedIdentity?.name ?? "");
+    setPendingColor(storedIdentity?.color ?? "Blue");
     setJoinError(null);
     setRoomInput(nextCode);
     setRoomCode(nextCode);
@@ -935,6 +1165,7 @@ export const useTicketPointing = (
     setPendingColorChoice,
     joinRoom,
     leaveRoom,
+    canChangeDeck,
     handleSelectValue,
     handleReveal,
     handleReset,
