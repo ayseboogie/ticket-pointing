@@ -14,6 +14,7 @@ import {
   useTicketPointing,
 } from "./useTicketPointing";
 import PointingLoader from "./PointingLoader";
+import RockPaperScissors from "./RockPaperScissors";
 
 type TicketPointingCmpProps = Pick<SliceComponentProps<any>, "slice"> & {
   footerLogo?: ImageField;
@@ -73,8 +74,15 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
     handleSelectValue,
     handleReveal,
     handleReset,
+    rpsGame,
+    rpsResult,
+    startRps,
+    chooseRpsMove,
+    dismissRps,
+    rematchRps,
   } = useTicketPointing(slice);
   const wasRevealedRef = useRef(false);
+  const wasRpsCompleteRef = useRef(false);
   const [copied, setCopied] = useState(false);
   const unanimousSelection = useMemo(() => {
     const joinedParticipants = participants.filter((participant) =>
@@ -126,6 +134,30 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
       });
     }, 180);
   }, [revealed, unanimousSelection, confettiColors]);
+
+  useEffect(() => {
+    const justWon =
+      rpsResult.complete &&
+      !rpsResult.tie &&
+      Boolean(rpsResult.winner) &&
+      Boolean(selectedName) &&
+      rpsResult.winner?.trim().toLowerCase() ===
+        selectedName?.trim().toLowerCase() &&
+      !wasRpsCompleteRef.current;
+
+    wasRpsCompleteRef.current = rpsResult.complete;
+
+    if (!justWon) {
+      return;
+    }
+
+    confetti({
+      particleCount: 120,
+      spread: 80,
+      origin: { y: 0.7 },
+      colors: confettiColors,
+    });
+  }, [rpsResult, selectedName, confettiColors]);
 
   const handleCopyShare = () => {
     if (!shareUrl || !navigator?.clipboard) {
@@ -427,6 +459,20 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
           </div>
         </div>
 
+        <RockPaperScissors
+          isJoined={isJoined}
+          selectedName={selectedName}
+          selectedColor={selectedColor}
+          participants={participants}
+          presenceByName={presenceByName}
+          rpsGame={rpsGame}
+          rpsResult={rpsResult}
+          startRps={startRps}
+          chooseRpsMove={chooseRpsMove}
+          dismissRps={dismissRps}
+          rematchRps={rematchRps}
+        />
+
         {/* Room status: who joined + selection state */}
         <div className="mt-8">
           <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
@@ -472,21 +518,36 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
                         </p>
                       </div>
                     </div>
-                    <div
-                      className={clsx(
-                        "min-w-[64px] rounded-full px-3 py-1 text-center text-sm font-semibold",
-                        showValue
-                          ? "bg-slate-900 text-white"
+                    <div className="flex items-center gap-2">
+                      {isJoined &&
+                      selectedName &&
+                      participant.name.trim().toLowerCase() !==
+                        selectedName.trim().toLowerCase() &&
+                      !rpsGame ? (
+                        <button
+                          type="button"
+                          className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-slate-300"
+                          onClick={() => startRps(participant.name)}
+                        >
+                          Play RPS
+                        </button>
+                      ) : null}
+                      <div
+                        className={clsx(
+                          "min-w-[64px] rounded-full px-3 py-1 text-center text-sm font-semibold",
+                          showValue
+                            ? "bg-slate-900 text-white"
+                            : selection !== null
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-slate-100 text-slate-400",
+                        )}
+                      >
+                        {showValue
+                          ? selection
                           : selection !== null
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-slate-100 text-slate-400",
-                      )}
-                    >
-                      {showValue
-                        ? selection
-                        : selection !== null
-                          ? "Selected"
-                          : "—"}
+                            ? "Selected"
+                            : "—"}
+                      </div>
                     </div>
                   </div>
                 );
