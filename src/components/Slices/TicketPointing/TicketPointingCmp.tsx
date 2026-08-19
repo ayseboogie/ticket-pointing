@@ -27,7 +27,7 @@ const PlayerShell = ({
   backgroundImage?: ImageField;
   children: ReactNode;
 }) => (
-  <section className="relative -mt-12 min-h-screen overflow-hidden">
+  <section className="relative -mt-40 min-h-screen overflow-hidden">
     {isFilled.image(backgroundImage) ? (
       <SuspenseImage
         image={backgroundImage}
@@ -38,7 +38,7 @@ const PlayerShell = ({
         priority
       />
     ) : null}
-    <div className="relative mx-auto max-w-5xl px-6 pb-12 pt-24">
+    <div className="relative mx-auto max-w-5xl px-6 pb-12 pt-52">
       {children}
     </div>
   </section>

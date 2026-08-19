@@ -6,16 +6,11 @@ import { Button } from "@/components/Button.tsx";
 import cn from "classnames";
 import * as prismicH from "@prismicio/helpers";
 import SuspenseImage from "@/components/Suspense/SuspenseImage";
+import MastheadSmokeWave, { mastheadSmokeClip } from "./MastheadSmokeWave";
 
 type HeroSliceImageProps = {
   slice: Content.HeroSliceImageDefault | Content.HeroSliceImageTitleOnly;
 };
-
-const mastheadWaveClip =
-  "polygon(0% 0%, 100% 0%, 100% calc(100% - 3rem), 97.22% calc(100% - 2.799rem), 94.44% calc(100% - 2.250rem), 91.67% calc(100% - 1.500rem), 88.89% calc(100% - 0.750rem), 86.11% calc(100% - 0.201rem), 83.33% 100%, 80.56% calc(100% - 0.201rem), 77.78% calc(100% - 0.750rem), 75% calc(100% - 1.500rem), 72.22% calc(100% - 2.250rem), 69.44% calc(100% - 2.799rem), 66.67% calc(100% - 3rem), 63.89% calc(100% - 2.799rem), 61.11% calc(100% - 2.250rem), 58.33% calc(100% - 1.500rem), 55.56% calc(100% - 0.750rem), 52.78% calc(100% - 0.201rem), 50% 100%, 47.22% calc(100% - 0.201rem), 44.44% calc(100% - 0.750rem), 41.67% calc(100% - 1.500rem), 38.89% calc(100% - 2.250rem), 36.11% calc(100% - 2.799rem), 33.33% calc(100% - 3rem), 30.56% calc(100% - 2.799rem), 27.78% calc(100% - 2.250rem), 25% calc(100% - 1.500rem), 22.22% calc(100% - 0.750rem), 19.44% calc(100% - 0.201rem), 16.67% 100%, 13.89% calc(100% - 0.201rem), 11.11% calc(100% - 0.750rem), 8.33% calc(100% - 1.500rem), 5.56% calc(100% - 2.250rem), 2.78% calc(100% - 2.799rem), 0% calc(100% - 3rem))";
-
-const mastheadWavePath =
-  "M0 0L33.3 3.22L66.7 12L100 24L133.3 36L166.7 44.78L200 48L233.3 44.78L266.7 36L300 24L333.3 12L366.7 3.22L400 0L433.3 3.22L466.7 12L500 24L533.3 36L566.7 44.78L600 48L633.3 44.78L666.7 36L700 24L733.3 12L766.7 3.22L800 0L833.3 3.22L866.7 12L900 24L933.3 36L966.7 44.78L1000 48L1033.3 44.78L1066.7 36L1100 24L1133.3 12L1166.7 3.22L1200 0Z";
 
 const HeroImage = ({ slice }: HeroSliceImageProps) => {
   const themeColor =
@@ -31,10 +26,10 @@ const HeroImage = ({ slice }: HeroSliceImageProps) => {
     >
       <div
         className={cn(
-          "relative min-h-[20vh] overflow-hidden md:min-h-[35vh] lg:min-h-[45vh]",
+          "relative min-h-[30vh] overflow-hidden md:min-h-[45vh] lg:min-h-[55vh]",
         )}
         style={{
-          clipPath: mastheadWaveClip,
+          clipPath: mastheadSmokeClip,
         }}
       >
         {/* Image */}
@@ -49,7 +44,7 @@ const HeroImage = ({ slice }: HeroSliceImageProps) => {
             priority
           />
         )}
-        <Container className="pb-20 pt-20 text-center lg:pt-32">
+        <Container className="pb-40 pt-28 text-center lg:pb-48 lg:pt-40">
           <PrismicRichText
             field={slice.primary.title}
             components={{
@@ -149,14 +144,7 @@ const HeroImage = ({ slice }: HeroSliceImageProps) => {
           )}
         </Container>
       </div>
-      <svg
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-12 w-full overflow-visible text-black"
-        viewBox="0 0 1200 48"
-        preserveAspectRatio="none"
-      >
-        <path fill="currentColor" d={mastheadWavePath} />
-      </svg>
+      <MastheadSmokeWave />
     </section>
   );
 };
