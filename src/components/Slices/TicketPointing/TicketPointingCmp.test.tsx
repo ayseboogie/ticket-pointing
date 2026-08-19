@@ -102,4 +102,72 @@ describe("TicketPointingCmp", () => {
       await screen.findByRole("button", { name: /Link copied!/i }),
     ).toBeInTheDocument();
   });
+
+  it("lets two joined people play rock paper scissors for a ticket", async () => {
+    const user = userEvent.setup();
+    const { supabase, channel } = createMockSupabase();
+    getSupabaseClientMock.mockReturnValue(supabase as any);
+
+    render(<TicketPointingCmp slice={slice as any} />);
+    channel.completeSubscribe("SUBSCRIBED");
+
+    const nameInput = await screen.findByPlaceholderText("Your name");
+    await user.type(nameInput, "Ayse");
+    await user.click(screen.getByRole("button", { name: "Join" }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/You're in as Ayse/i)).toBeInTheDocument();
+    });
+
+    const clientId = window.localStorage.getItem("ticket-pointing:client-id");
+    channel.presenceState.mockReturnValue({
+      [clientId ?? "local"]: [
+        {
+          clientId: clientId ?? "local",
+          name: "Ayse",
+          color: "Blue",
+          selectedValue: null,
+          roundId: "",
+        },
+      ],
+      "peer-1": [
+        {
+          clientId: "peer-1",
+          name: "Sam",
+          color: "Teal",
+          selectedValue: null,
+          roundId: "",
+        },
+      ],
+    });
+    channel.emit("presence", "sync");
+
+    expect(
+      await screen.findByRole("button", { name: /Challenge Sam/i }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /Challenge Sam/i }));
+
+    expect(await screen.findByText("vs")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Rock" }));
+    expect(screen.getByText(/Locked in/i)).toBeInTheDocument();
+
+    const sendCalls = channel.send.mock.calls.filter(
+      (call) => call[0]?.event === "rps-sync",
+    );
+    const gameId = sendCalls.at(-1)?.[0]?.payload?.game?.id as string;
+
+    channel.emit("broadcast", "rps-sync", {
+      game: {
+        id: gameId,
+        challenger: "Ayse",
+        opponent: "Sam",
+        locked: ["Sam"],
+        moves: { Sam: "scissors" },
+      },
+    });
+
+    expect(
+      await screen.findByText(/Ayse takes the ticket!/i),
+    ).toBeInTheDocument();
+  });
 });

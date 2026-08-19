@@ -2,6 +2,19 @@ import { SliceComponentProps } from "@prismicio/react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getSupabaseClient } from "@/utils/supabaseClient";
+import {
+  createRpsGameId,
+  isRpsGame,
+  isRpsMove,
+  isRpsPlayer,
+  mergeRpsGame,
+  rpsPayloadForSync,
+  rpsResult as computeRpsResult,
+  rpsSeatForName,
+  type RpsGame,
+  type RpsMove,
+  type RpsResult,
+} from "./rps";
 
 type TicketPointingSlice = SliceComponentProps<any>["slice"];
 
@@ -391,6 +404,12 @@ type TicketPointingHookResult = {
   handleSelectValue: (value: number) => void;
   handleReveal: () => void;
   handleReset: () => void;
+  rpsGame: RpsGame | null;
+  rpsResult: RpsResult;
+  startRps: (opponentName: string) => void;
+  chooseRpsMove: (move: RpsMove) => void;
+  dismissRps: () => void;
+  rematchRps: () => void;
 };
 
 export const useTicketPointing = (
@@ -452,6 +471,8 @@ export const useTicketPointing = (
   const [presenceReady, setPresenceReady] = useState(false);
   // Prevents auto-rejoin from retrying forever when the stored seat is taken.
   const autoRejoinAttemptedRef = useRef<string | null>(null);
+  // Active rock-paper-scissors match for who takes the ticket.
+  const [rpsGame, setRpsGame] = useState<RpsGame | null>(null);
 
   // Refs used inside realtime callbacks so the channel subscribes once per
   // room and never has to reconnect just because local state changed.
@@ -462,6 +483,7 @@ export const useTicketPointing = (
   const selectedValueRef = useRef(selectedValue);
   const deckRef = useRef(deck);
   const deckStampRef = useRef(deckStamp);
+  const rpsGameRef = useRef(rpsGame);
 
   useEffect(() => {
     deckRef.current = deck;
@@ -470,6 +492,10 @@ export const useTicketPointing = (
   useEffect(() => {
     deckStampRef.current = deckStamp;
   }, [deckStamp]);
+
+  useEffect(() => {
+    rpsGameRef.current = rpsGame;
+  }, [rpsGame]);
 
   useEffect(() => {
     revealedRef.current = revealed;
@@ -560,6 +586,31 @@ export const useTicketPointing = (
     writeStoredRoomDeck(roomCode, deck, deckStamp);
   }, [hasMounted, roomCode, deck, deckStamp]);
 
+  const applyIncomingRps = (
+    incoming: RpsGame | null,
+    dismissId?: string | null,
+  ) => {
+    const next = mergeRpsGame(rpsGameRef.current, incoming, dismissId);
+    if (next === rpsGameRef.current) {
+      return next;
+    }
+    rpsGameRef.current = next;
+    setRpsGame(next);
+    return next;
+  };
+
+  const broadcastRps = (
+    incoming: RpsGame | null,
+    dismissId?: string | null,
+  ) => {
+    applyIncomingRps(incoming, dismissId);
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "rps-sync",
+      payload: { game: incoming, dismissId: dismissId ?? null },
+    });
+  };
+
   // Join Supabase realtime room: presence + broadcast
   useEffect(() => {
     if (!supabase) {
@@ -573,6 +624,8 @@ export const useTicketPointing = (
     channelRef.current = channel;
     setConnectionState("connecting");
     setPresenceReady(false);
+    rpsGameRef.current = null;
+    setRpsGame(null);
 
     // Presence sync: rebuild clientId -> presence map
     channel.on("presence", { event: "sync" }, () => {
@@ -648,6 +701,7 @@ export const useTicketPointing = (
           roundId: roundIdRef.current,
           deck: deckRef.current,
           deckStamp: deckStampRef.current,
+          rps: rpsPayloadForSync(rpsGameRef.current),
           target: payload?.requesterId ?? null,
         },
       });
@@ -706,6 +760,28 @@ export const useTicketPointing = (
         ) {
           setSelectedValue(null);
         }
+      }
+
+      // Adopt an in-flight RPS match from the join handshake. Ignore null —
+      // a dedicated rps-sync dismiss is the real clear, so a laggy handshake
+      // can't wipe a game this client just started.
+      if (isRpsGame(payload.rps)) {
+        applyIncomingRps(payload.rps);
+      }
+    });
+
+    channel.on("broadcast", { event: "rps-sync" }, ({ payload }) => {
+      if (!payload) {
+        return;
+      }
+      if (isRpsGame(payload.game)) {
+        applyIncomingRps(payload.game);
+        return;
+      }
+      if (payload.game === null) {
+        const dismissId =
+          typeof payload.dismissId === "string" ? payload.dismissId : null;
+        applyIncomingRps(null, dismissId);
       }
     });
 
@@ -970,6 +1046,8 @@ export const useTicketPointing = (
 
   const isJoined = Boolean(selectedName);
 
+  const rpsResult = useMemo(() => computeRpsResult(rpsGame), [rpsGame]);
+
   // Standard ↔ Fibonacci can still be flipped at the start of a round. Once
   // anyone has pointed (or scores are revealed), lock the deck until Reset so
   // one person can't yank the number system out from under everyone else.
@@ -1048,6 +1126,80 @@ export const useTicketPointing = (
     });
   };
 
+  const startRps = (opponentName: string) => {
+    const name = selectedName?.trim();
+    const opponent = opponentName.trim();
+    if (!name || !opponent || normalizeName(name) === normalizeName(opponent)) {
+      return;
+    }
+
+    const game: RpsGame = {
+      id: createRpsGameId(clientId, rpsGameRef.current?.id),
+      challenger: name,
+      opponent,
+      locked: [],
+      moves: {},
+    };
+    broadcastRps(game);
+  };
+
+  const chooseRpsMove = (move: RpsMove) => {
+    const game = rpsGameRef.current;
+    const name = selectedName?.trim();
+    if (!game || !name || !isRpsMove(move)) {
+      return;
+    }
+
+    const seat = rpsSeatForName(game, name);
+    if (!seat || !isRpsPlayer(game, name)) {
+      return;
+    }
+
+    const result = computeRpsResult(game);
+    if (result.complete) {
+      return;
+    }
+    if (
+      game.locked.some(
+        (lockedName) => normalizeName(lockedName) === normalizeName(seat),
+      )
+    ) {
+      return;
+    }
+    if (isRpsMove(game.moves[seat])) {
+      return;
+    }
+
+    broadcastRps({
+      ...game,
+      locked: [...game.locked, seat],
+      moves: { ...game.moves, [seat]: move },
+    });
+  };
+
+  const dismissRps = () => {
+    const game = rpsGameRef.current;
+    if (!game) {
+      return;
+    }
+    broadcastRps(null, game.id);
+  };
+
+  const rematchRps = () => {
+    const game = rpsGameRef.current;
+    if (!game) {
+      return;
+    }
+
+    broadcastRps({
+      id: createRpsGameId(clientId, game.id),
+      challenger: game.challenger,
+      opponent: game.opponent,
+      locked: [],
+      moves: {},
+    });
+  };
+
   const setPendingNameChoice = (name: string) => {
     setPendingName(name);
     setJoinError(null);
@@ -1091,6 +1243,10 @@ export const useTicketPointing = (
 
   // Leave the room (frees the name/color for others)
   const leaveRoom = () => {
+    const game = rpsGameRef.current;
+    if (game && selectedName && isRpsPlayer(game, selectedName)) {
+      broadcastRps(null, game.id);
+    }
     clearStoredRoomIdentity(roomCode);
     autoRejoinAttemptedRef.current = roomCode;
     setSelectedName(null);
@@ -1113,6 +1269,8 @@ export const useTicketPointing = (
     setRevealed(false);
     setPresenceByClientId({});
     setRoundId("");
+    rpsGameRef.current = null;
+    setRpsGame(null);
     autoRejoinAttemptedRef.current = null;
     // Restore the target room's remembered deck for this browser (falling back
     // to the primordial deck), then let the room's live convergence take over.
@@ -1169,5 +1327,11 @@ export const useTicketPointing = (
     handleSelectValue,
     handleReveal,
     handleReset,
+    rpsGame,
+    rpsResult,
+    startRps,
+    chooseRpsMove,
+    dismissRps,
+    rematchRps,
   };
 };

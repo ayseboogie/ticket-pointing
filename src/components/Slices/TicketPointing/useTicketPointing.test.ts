@@ -376,4 +376,119 @@ describe("useTicketPointing", () => {
       expect(result.current.isJoined).toBe(true);
     });
   });
+
+  it("starts an RPS challenge and settles a winner after both throws", async () => {
+    const { result, channel } = await mountConnected();
+
+    joinAs(result, "Ayse", "Pink");
+
+    channel.presenceState.mockReturnValue({
+      "peer-1": [
+        {
+          clientId: "peer-1",
+          name: "Sam",
+          color: "Teal",
+          selectedValue: null,
+          roundId: "",
+        },
+      ],
+    });
+    act(() => {
+      channel.emit("presence", "sync");
+    });
+
+    act(() => {
+      result.current.startRps("Sam");
+    });
+
+    expect(result.current.rpsGame?.challenger).toBe("Ayse");
+    expect(result.current.rpsGame?.opponent).toBe("Sam");
+    expect(channel.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "rps-sync",
+        payload: expect.objectContaining({
+          game: expect.objectContaining({
+            challenger: "Ayse",
+            opponent: "Sam",
+          }),
+        }),
+      }),
+    );
+
+    act(() => {
+      result.current.chooseRpsMove("rock");
+    });
+    expect(result.current.rpsGame?.moves.Ayse).toBe("rock");
+    expect(result.current.rpsResult.complete).toBe(false);
+
+    const gameId = result.current.rpsGame?.id;
+    act(() => {
+      channel.emit("broadcast", "rps-sync", {
+        game: {
+          id: gameId,
+          challenger: "Ayse",
+          opponent: "Sam",
+          locked: ["Sam"],
+          moves: { Sam: "scissors" },
+        },
+      });
+    });
+
+    expect(result.current.rpsResult).toEqual({
+      complete: true,
+      winner: "Ayse",
+      tie: false,
+    });
+  });
+
+  it("dismisses and rematches over rps-sync", async () => {
+    const { result, channel } = await mountConnected();
+
+    joinAs(result, "Ayse");
+    act(() => {
+      result.current.startRps("Sam");
+    });
+
+    const firstId = result.current.rpsGame?.id;
+    act(() => {
+      result.current.rematchRps();
+    });
+    expect(result.current.rpsGame?.id).not.toBe(firstId);
+    expect(result.current.rpsGame?.moves).toEqual({});
+
+    act(() => {
+      result.current.dismissRps();
+    });
+    expect(result.current.rpsGame).toBeNull();
+    expect(channel.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "rps-sync",
+        payload: expect.objectContaining({ game: null }),
+      }),
+    );
+  });
+
+  it("adopts a peer RPS match from the join handshake", async () => {
+    const { result, channel } = await mountConnected();
+
+    act(() => {
+      channel.emit("broadcast", "state-sync", {
+        rps: {
+          id: "000000000000500.peer",
+          challenger: "Sam",
+          opponent: "Alex",
+          locked: ["Sam", "Alex"],
+          moves: { Sam: "paper", Alex: "rock" },
+        },
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.rpsResult).toEqual({
+        complete: true,
+        winner: "Sam",
+        tie: false,
+      });
+    });
+  });
 });
