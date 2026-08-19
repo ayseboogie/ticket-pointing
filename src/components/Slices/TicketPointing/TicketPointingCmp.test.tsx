@@ -13,7 +13,11 @@ vi.mock("canvas-confetti", () => ({
 }));
 
 vi.mock("@/components/Suspense/SuspenseImage.tsx", () => ({
-  default: () => null,
+  default: ({
+    image,
+  }: {
+    image?: { url?: string | null; alt?: string | null };
+  }) => (image?.url ? <img src={image.url} alt={image.alt ?? ""} /> : null),
 }));
 
 import { getSupabaseClient } from "@/utils/supabaseClient";
@@ -44,6 +48,31 @@ describe("TicketPointingCmp", () => {
       await screen.findByText(/Supabase is not configured/i),
     ).toBeInTheDocument();
     expect(screen.getByText("Sprint Pointing")).toBeInTheDocument();
+  });
+
+  it("uses the Prismic background image behind the player", async () => {
+    getSupabaseClientMock.mockReturnValue(null);
+
+    render(
+      <TicketPointingCmp
+        slice={
+          {
+            primary: {
+              ...slice.primary,
+              background_image: {
+                url: "https://example.com/room-bg.jpg",
+                alt: "Pointing room background",
+                dimensions: { width: 1600, height: 900 },
+              },
+            },
+          } as any
+        }
+      />,
+    );
+
+    expect(
+      await screen.findByAltText("Pointing room background"),
+    ).toHaveAttribute("src", "https://example.com/room-bg.jpg");
   });
 
   it("renders the room UI and allows joining + selecting a card", async () => {

@@ -1,10 +1,10 @@
 "use client";
 
 import { SliceComponentProps } from "@prismicio/react";
-import type { ImageField } from "@prismicio/client";
+import { isFilled, type ImageField } from "@prismicio/client";
 import clsx from "clsx";
 import confetti from "canvas-confetti";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import SuspenseImage from "@/components/Suspense/SuspenseImage.tsx";
 import {
   avatarColorClass,
@@ -19,6 +19,28 @@ import RockPaperScissors from "./RockPaperScissors";
 type TicketPointingCmpProps = Pick<SliceComponentProps<any>, "slice"> & {
   footerLogo?: ImageField;
 };
+
+const PlayerShell = ({
+  backgroundImage,
+  children,
+}: {
+  backgroundImage?: ImageField;
+  children: ReactNode;
+}) => (
+  <section className="relative isolate min-h-screen overflow-hidden">
+    {isFilled.image(backgroundImage) ? (
+      <SuspenseImage
+        image={backgroundImage}
+        fill
+        sizes="100vw"
+        className="absolute inset-0 -z-10 h-full w-full object-cover"
+        unoptimized
+        priority
+      />
+    ) : null}
+    <div className="relative mx-auto max-w-5xl px-6 py-12">{children}</div>
+  </section>
+);
 
 const confettiColorByName: Record<string, string> = {
   blue: "#3B82F6",
@@ -169,22 +191,24 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
     });
   };
 
+  const backgroundImage = slice.primary?.background_image;
+
   // Avoid SSR/CSR mismatches while the client initializes
   if (!hasMounted) {
     return (
-      <section className="mx-auto max-w-5xl px-6 py-12">
+      <PlayerShell backgroundImage={backgroundImage}>
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-2xl font-semibold text-slate-900">{roomTitle}</h2>
           <PointingLoader />
         </div>
-      </section>
+      </PlayerShell>
     );
   }
 
   // Supabase config missing -> show helpful message
   if (!supabase) {
     return (
-      <section className="mx-auto max-w-5xl px-6 py-12">
+      <PlayerShell backgroundImage={backgroundImage}>
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-2xl font-semibold text-slate-900">{roomTitle}</h2>
           <p className="mt-3 text-sm text-slate-600">
@@ -193,12 +217,12 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
             pointing.
           </p>
         </div>
-      </section>
+      </PlayerShell>
     );
   }
 
   return (
-    <section className="mx-auto max-w-5xl px-6 py-12">
+    <PlayerShell backgroundImage={backgroundImage}>
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4 sm:gap-6">
@@ -556,7 +580,7 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
           )}
         </div>
       </div>
-    </section>
+    </PlayerShell>
   );
 };
 
