@@ -1,23 +1,46 @@
 [
   {
     "__TYPE__": "SharedSliceContent",
-    "variation": "default",
+    "items": [],
     "primary": {
-      "room_id": {
-        "__TYPE__": "FieldContent",
-        "value": "team-alpha",
-        "type": "Text"
-      },
-      "room_title": {
-        "__TYPE__": "FieldContent",
-        "value": "Sprint Planning Room",
-        "type": "Text"
-      },
       "allow_reveal": {
         "__TYPE__": "BooleanContent",
         "value": true
+      },
+      "background_image": {
+        "alt": "Pointing room background",
+        "edit": {
+          "background": "transparent",
+          "crop": {
+            "x": 0,
+            "y": 0
+          },
+          "zoom": 1
+        },
+        "height": 3744,
+        "origin": {
+          "height": 3744,
+          "id": "main",
+          "url": "https://images.unsplash.com/photo-1515378960530-7c0da6231fb1",
+          "width": 5616
+        },
+        "url": "https://images.unsplash.com/photo-1515378960530-7c0da6231fb1",
+        "width": 5616,
+        "credits": null,
+        "__TYPE__": "ImageContent",
+        "thumbnails": {}
+      },
+      "room_id": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "team-alpha"
+      },
+      "room_title": {
+        "__TYPE__": "FieldContent",
+        "type": "Text",
+        "value": "Sprint Planning Room"
       }
     },
-    "items": []
+    "variation": "default"
   }
 ]
