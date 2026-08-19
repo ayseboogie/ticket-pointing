@@ -24,7 +24,7 @@ const HeroImage = ({ slice }: HeroSliceImageProps) => {
     >
       <div
         className={cn(
-          "relative isolate overflow-hidden min-h-[20vh] md:min-h-[35vh] lg:min-h-[45vh]",
+          "relative isolate min-h-[20vh] overflow-hidden md:min-h-[35vh] lg:min-h-[45vh]",
         )}
       >
         {/* Image */}
@@ -139,6 +139,17 @@ const HeroImage = ({ slice }: HeroSliceImageProps) => {
           )}
         </Container>
       </div>
+      <svg
+        aria-hidden="true"
+        className="pointer-events-none relative -mt-px block h-14 w-full text-black md:h-20 lg:h-24"
+        viewBox="0 0 1440 120"
+        preserveAspectRatio="none"
+      >
+        <path
+          fill="currentColor"
+          d="M0 0h1440v62c-80 40-160-40-240 0s-160 40-240 0-160-40-240 0-160 40-240 0-160-40-240 0-160 40-240 0V0Z"
+        />
+      </svg>
     </section>
   );
 };
