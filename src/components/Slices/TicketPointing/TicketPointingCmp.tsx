@@ -247,7 +247,6 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
               />
             ) : null}
           </div>
-          {/* Room-level controls */}
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -272,7 +271,8 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
           </div>
         </div>
 
-        {/* Team room switcher: each room is an isolated, shareable session */}
+        <div className="mt-6 border-t border-slate-200" />
+
         <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50 p-4">
           <p className="text-sm font-medium text-slate-700">
             Team room — share this room with your team so you all point

@@ -115,6 +115,7 @@ const RockPaperScissors = ({
       <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
         Rock Paper Scissors
       </p>
+      <div className="mt-3 border-t border-slate-200" />
 
       {rpsGame ? (
         <div className="mt-4">
