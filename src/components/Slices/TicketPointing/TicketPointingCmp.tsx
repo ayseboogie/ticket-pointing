@@ -27,18 +27,20 @@ const PlayerShell = ({
   backgroundImage?: ImageField;
   children: ReactNode;
 }) => (
-  <section className="relative isolate min-h-screen overflow-hidden">
+  <section className="relative -mt-40 min-h-screen overflow-hidden">
     {isFilled.image(backgroundImage) ? (
       <SuspenseImage
         image={backgroundImage}
         fill
         sizes="100vw"
-        className="absolute inset-0 -z-10 h-full w-full object-cover"
+        className="absolute inset-0 h-full w-full object-cover"
         unoptimized
         priority
       />
     ) : null}
-    <div className="relative mx-auto max-w-5xl px-6 py-12">{children}</div>
+    <div className="relative mx-auto max-w-5xl px-6 pb-12 pt-52">
+      {children}
+    </div>
   </section>
 );
 

@@ -6,6 +6,7 @@ import { Button } from "@/components/Button.tsx";
 import cn from "classnames";
 import * as prismicH from "@prismicio/helpers";
 import SuspenseImage from "@/components/Suspense/SuspenseImage";
+import MastheadSmokeWave, { mastheadSmokeClip } from "./MastheadSmokeWave";
 
 type HeroSliceImageProps = {
   slice: Content.HeroSliceImageDefault | Content.HeroSliceImageTitleOnly;
@@ -21,25 +22,29 @@ const HeroImage = ({ slice }: HeroSliceImageProps) => {
     <section
       id={slice.primary.anchor || undefined}
       data-slice-variation={slice.variation}
+      className="relative z-10"
     >
       <div
         className={cn(
-          "relative isolate min-h-[20vh] overflow-hidden md:min-h-[35vh] lg:min-h-[45vh]",
+          "relative min-h-[30vh] overflow-hidden md:min-h-[45vh] lg:min-h-[55vh]",
         )}
+        style={{
+          clipPath: mastheadSmokeClip,
+        }}
       >
         {/* Image */}
         {prismicH.isFilled.image(slice.primary.backgroundimage) && (
           <SuspenseImage
             image={slice.primary.backgroundimage}
             fill={true}
-            className="absolute inset-0 -z-10 h-full w-full object-cover object-right md:object-center brightness-75"
+            className="absolute inset-0 h-full w-full object-cover object-right md:object-center brightness-75"
             width={2245}
             height={1636}
             unoptimized
             priority
           />
         )}
-        <Container className="pb-16 pt-20 text-center lg:pt-32">
+        <Container className="pb-40 pt-28 text-center lg:pb-48 lg:pt-40">
           <PrismicRichText
             field={slice.primary.title}
             components={{
@@ -139,17 +144,7 @@ const HeroImage = ({ slice }: HeroSliceImageProps) => {
           )}
         </Container>
       </div>
-      <svg
-        aria-hidden="true"
-        className="pointer-events-none relative -mt-px block h-14 w-full text-black md:h-20 lg:h-24"
-        viewBox="0 0 1440 120"
-        preserveAspectRatio="none"
-      >
-        <path
-          fill="currentColor"
-          d="M0 0h1440v62c-80 40-160-40-240 0s-160 40-240 0-160-40-240 0-160 40-240 0-160-40-240 0-160 40-240 0V0Z"
-        />
-      </svg>
+      <MastheadSmokeWave />
     </section>
   );
 };
