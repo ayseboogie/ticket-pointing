@@ -141,13 +141,13 @@ const HeroImage = ({ slice }: HeroSliceImageProps) => {
       </div>
       <svg
         aria-hidden="true"
-        className="pointer-events-none relative -mt-px block h-14 w-full text-black md:h-20 lg:h-24"
+        className="pointer-events-none relative -mt-8 block h-14 w-full text-black md:-mt-10 md:h-20 lg:-mt-12 lg:h-24"
         viewBox="0 0 1440 120"
         preserveAspectRatio="none"
       >
         <path
           fill="currentColor"
-          d="M0 0h1440v62c-80 40-160-40-240 0s-160 40-240 0-160-40-240 0-160 40-240 0-160-40-240 0-160 40-240 0V0Z"
+          d="M0 120V62c80-40 160 40 240 0s160-40 240 0 160 40 240 0 160-40 240 0 160 40 240 0 160-40 240 0V120H0Z"
         />
       </svg>
     </section>
