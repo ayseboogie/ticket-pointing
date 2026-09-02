@@ -97,6 +97,21 @@ export const normalizeColor = (color?: string) =>
 export const normalizeName = (name?: string) =>
   name?.trim().toLowerCase() ?? "";
 
+// Among people who actually voted, whether they all picked the same number.
+// Ignores joined users with no selection. Needs at least two votes.
+export const unanimousSelectedValue = (
+  selections: Array<number | null | undefined>,
+): number | null => {
+  const votes = selections.filter(
+    (selection): selection is number => typeof selection === "number",
+  );
+  if (votes.length < 2) {
+    return null;
+  }
+
+  return votes.every((selection) => selection === votes[0]) ? votes[0] : null;
+};
+
 // Tailwind class for participant avatar background
 export const avatarColorClass = (color?: string) => {
   switch (normalizeColor(color)) {

@@ -11,6 +11,7 @@ import {
   parseRoundId,
   roundIdBeats,
   selectedColorClass,
+  unanimousSelectedValue,
 } from "./useTicketPointing";
 
 describe("normalizeRoomCode", () => {
@@ -27,6 +28,24 @@ describe("normalizeRoomCode", () => {
     expect(normalizeRoomCode("")).toBe("");
     expect(normalizeRoomCode(undefined)).toBe("");
     expect(normalizeRoomCode("   ")).toBe("");
+  });
+});
+
+describe("unanimousSelectedValue", () => {
+  it("returns the shared value when at least two voters agree", () => {
+    expect(unanimousSelectedValue([5, 5])).toBe(5);
+    expect(unanimousSelectedValue([8, null, 8])).toBe(8);
+  });
+
+  it("ignores joined users who have not selected a number", () => {
+    expect(unanimousSelectedValue([3, null, undefined, 3])).toBe(3);
+  });
+
+  it("returns null when there are fewer than two votes or they disagree", () => {
+    expect(unanimousSelectedValue([5])).toBeNull();
+    expect(unanimousSelectedValue([5, null])).toBeNull();
+    expect(unanimousSelectedValue([5, 8])).toBeNull();
+    expect(unanimousSelectedValue([])).toBeNull();
   });
 });
 
