@@ -20,9 +20,11 @@ vi.mock("@/components/Suspense/SuspenseImage.tsx", () => ({
   }) => (image?.url ? <img src={image.url} alt={image.alt ?? ""} /> : null),
 }));
 
+import confetti from "canvas-confetti";
 import { getSupabaseClient } from "@/utils/supabaseClient";
 
 const getSupabaseClientMock = vi.mocked(getSupabaseClient);
+const confettiMock = vi.mocked(confetti);
 
 const slice = {
   primary: {
@@ -198,5 +200,166 @@ describe("TicketPointingCmp", () => {
     expect(
       await screen.findByText(/Ayse takes the ticket!/i),
     ).toBeInTheDocument();
+  });
+
+  it("fires confetti on reveal when every voter picked the same number", async () => {
+    const user = userEvent.setup();
+    const { supabase, channel } = createMockSupabase();
+    getSupabaseClientMock.mockReturnValue(supabase as any);
+
+    render(<TicketPointingCmp slice={slice as any} />);
+    channel.completeSubscribe("SUBSCRIBED");
+
+    const nameInput = await screen.findByPlaceholderText("Your name");
+    await user.type(nameInput, "Ayse");
+    await user.click(screen.getByRole("button", { name: "Join" }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/You're in as Ayse/i)).toBeInTheDocument();
+    });
+
+    const clientId = window.localStorage.getItem("ticket-pointing:client-id");
+    channel.presenceState.mockReturnValue({
+      [clientId ?? "local"]: [
+        {
+          clientId: clientId ?? "local",
+          name: "Ayse",
+          color: "Blue",
+          selectedValue: 5,
+          roundId: "",
+        },
+      ],
+      "peer-1": [
+        {
+          clientId: "peer-1",
+          name: "Sam",
+          color: "Teal",
+          selectedValue: 5,
+          roundId: "",
+        },
+      ],
+    });
+    channel.emit("presence", "sync");
+
+    await user.click(screen.getByRole("button", { name: "5" }));
+    await user.click(screen.getByRole("button", { name: "Reveal" }));
+
+    expect(confettiMock).toHaveBeenCalled();
+  });
+
+  it("still fires confetti if matching votes land after reveal", async () => {
+    const user = userEvent.setup();
+    const { supabase, channel } = createMockSupabase();
+    getSupabaseClientMock.mockReturnValue(supabase as any);
+
+    render(<TicketPointingCmp slice={slice as any} />);
+    channel.completeSubscribe("SUBSCRIBED");
+
+    const nameInput = await screen.findByPlaceholderText("Your name");
+    await user.type(nameInput, "Ayse");
+    await user.click(screen.getByRole("button", { name: "Join" }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/You're in as Ayse/i)).toBeInTheDocument();
+    });
+
+    const clientId = window.localStorage.getItem("ticket-pointing:client-id");
+    channel.presenceState.mockReturnValue({
+      [clientId ?? "local"]: [
+        {
+          clientId: clientId ?? "local",
+          name: "Ayse",
+          color: "Blue",
+          selectedValue: 3,
+          roundId: "",
+        },
+      ],
+      "peer-1": [
+        {
+          clientId: "peer-1",
+          name: "Sam",
+          color: "Teal",
+          selectedValue: null,
+          roundId: "",
+        },
+      ],
+    });
+    channel.emit("presence", "sync");
+
+    await user.click(screen.getByRole("button", { name: "3" }));
+    await user.click(screen.getByRole("button", { name: "Reveal" }));
+
+    expect(confettiMock).not.toHaveBeenCalled();
+
+    channel.presenceState.mockReturnValue({
+      [clientId ?? "local"]: [
+        {
+          clientId: clientId ?? "local",
+          name: "Ayse",
+          color: "Blue",
+          selectedValue: 3,
+          roundId: "",
+        },
+      ],
+      "peer-1": [
+        {
+          clientId: "peer-1",
+          name: "Sam",
+          color: "Teal",
+          selectedValue: 3,
+          roundId: "",
+        },
+      ],
+    });
+    channel.emit("presence", "sync");
+
+    await waitFor(() => {
+      expect(confettiMock).toHaveBeenCalled();
+    });
+  });
+
+  it("does not fire confetti when voters picked different numbers", async () => {
+    const user = userEvent.setup();
+    const { supabase, channel } = createMockSupabase();
+    getSupabaseClientMock.mockReturnValue(supabase as any);
+
+    render(<TicketPointingCmp slice={slice as any} />);
+    channel.completeSubscribe("SUBSCRIBED");
+
+    const nameInput = await screen.findByPlaceholderText("Your name");
+    await user.type(nameInput, "Ayse");
+    await user.click(screen.getByRole("button", { name: "Join" }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/You're in as Ayse/i)).toBeInTheDocument();
+    });
+
+    const clientId = window.localStorage.getItem("ticket-pointing:client-id");
+    channel.presenceState.mockReturnValue({
+      [clientId ?? "local"]: [
+        {
+          clientId: clientId ?? "local",
+          name: "Ayse",
+          color: "Blue",
+          selectedValue: 5,
+          roundId: "",
+        },
+      ],
+      "peer-1": [
+        {
+          clientId: "peer-1",
+          name: "Sam",
+          color: "Teal",
+          selectedValue: 8,
+          roundId: "",
+        },
+      ],
+    });
+    channel.emit("presence", "sync");
+
+    await user.click(screen.getByRole("button", { name: "5" }));
+    await user.click(screen.getByRole("button", { name: "Reveal" }));
+
+    expect(confettiMock).not.toHaveBeenCalled();
   });
 });

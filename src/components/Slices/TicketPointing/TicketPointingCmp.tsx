@@ -10,7 +10,9 @@ import {
   avatarColorClass,
   colorOptions,
   normalizeColor,
+  normalizeName,
   selectedColorClass,
+  unanimousSelectedValue,
   useTicketPointing,
 } from "./useTicketPointing";
 import PointingLoader from "./PointingLoader";
@@ -43,6 +45,8 @@ const PlayerShell = ({
     </div>
   </section>
 );
+
+const CONFETTI_Z_INDEX = 10000;
 
 const confettiColorByName: Record<string, string> = {
   blue: "#3B82F6",
@@ -106,26 +110,37 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
     rematchRps,
   } = useTicketPointing(slice);
   const wasRevealedRef = useRef(false);
+  const pendingUnanimousConfettiRef = useRef(false);
   const wasRpsCompleteRef = useRef(false);
   const [copied, setCopied] = useState(false);
   const unanimousSelection = useMemo(() => {
-    const joinedParticipants = participants.filter((participant) =>
-      Boolean(presenceByName[participant.name]),
-    );
+    const votesByName = new Map<string, number>();
 
-    const joinedSelections = joinedParticipants
-      .map((participant) => activeSelections[participant.name])
-      .filter((selection): selection is number => selection !== null);
+    participants.forEach((participant) => {
+      if (!presenceByName[participant.name]) {
+        return;
+      }
 
-    if (joinedSelections.length < 2) {
-      return null;
+      const selection = activeSelections[participant.name];
+      if (typeof selection === "number") {
+        votesByName.set(normalizeName(participant.name), selection);
+      }
+    });
+
+    // Count the local vote immediately so reveal isn't gated on presence echo.
+    if (selectedName && typeof selectedValue === "number") {
+      votesByName.set(normalizeName(selectedName), selectedValue);
     }
 
-    const [firstSelection, ...restSelections] = joinedSelections;
-    return restSelections.every((selection) => selection === firstSelection)
-      ? firstSelection
-      : null;
-  }, [participants, presenceByName, activeSelections, roundId]);
+    return unanimousSelectedValue([...votesByName.values()]);
+  }, [
+    participants,
+    presenceByName,
+    activeSelections,
+    selectedName,
+    selectedValue,
+    roundId,
+  ]);
   const confettiColors = useMemo(
     () =>
       colorOptions.map(
@@ -139,24 +154,41 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
     const justRevealed = revealed && !wasRevealedRef.current;
     wasRevealedRef.current = revealed;
 
-    if (!justRevealed || unanimousSelection === null) {
+    if (!revealed) {
+      pendingUnanimousConfettiRef.current = false;
       return;
     }
+
+    if (justRevealed) {
+      pendingUnanimousConfettiRef.current = true;
+    }
+
+    if (!pendingUnanimousConfettiRef.current || unanimousSelection === null) {
+      return;
+    }
+
+    pendingUnanimousConfettiRef.current = false;
 
     confetti({
       particleCount: 140,
       spread: 80,
       origin: { y: 0.7 },
       colors: confettiColors,
+      zIndex: CONFETTI_Z_INDEX,
     });
-    window.setTimeout(() => {
+    const timeoutId = window.setTimeout(() => {
       confetti({
         particleCount: 100,
         spread: 100,
         origin: { y: 0.65 },
         colors: confettiColors,
+        zIndex: CONFETTI_Z_INDEX,
       });
     }, 180);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [revealed, unanimousSelection, confettiColors]);
 
   useEffect(() => {
@@ -180,6 +212,7 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
       spread: 80,
       origin: { y: 0.7 },
       colors: confettiColors,
+      zIndex: CONFETTI_Z_INDEX,
     });
   }, [rpsResult, selectedName, confettiColors]);
 
