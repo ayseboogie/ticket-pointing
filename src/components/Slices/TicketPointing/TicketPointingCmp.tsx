@@ -87,9 +87,6 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
     activeSelections,
     hasAvailableColor,
     cardValues,
-    deck,
-    deckOptions,
-    setDeck,
     isColorTaken,
     isNameTaken,
     setRoomInput,
@@ -98,7 +95,6 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
     setPendingColorChoice,
     joinRoom,
     leaveRoom,
-    canChangeDeck,
     handleSelectValue,
     handleReveal,
     handleReset,
@@ -466,37 +462,6 @@ const TicketPointingCmp = ({ slice, footerLogo }: TicketPointingCmpProps) => {
 
         {/* Card selection (local + presence-driven) */}
         <div className="mt-6">
-          {/* Deck picker — locked once anyone points this round */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-slate-400">
-              Deck
-            </span>
-            {deckOptions.map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                disabled={!canChangeDeck}
-                title={
-                  canChangeDeck
-                    ? undefined
-                    : "Deck is locked until Reset (someone already pointed)."
-                }
-                className={clsx(
-                  "rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide transition",
-                  deck === option.id
-                    ? "border-slate-900 bg-slate-900 text-white"
-                    : "border-slate-200 text-slate-600 hover:border-slate-300",
-                  !canChangeDeck ? "cursor-not-allowed opacity-50" : "",
-                )}
-                onClick={() => setDeck(option.id)}
-              >
-                {option.label}
-              </button>
-            ))}
-            {!canChangeDeck ? (
-              <span className="text-xs text-slate-400">Locked until Reset</span>
-            ) : null}
-          </div>
           <div className="mt-3 grid grid-cols-4 gap-3 sm:grid-cols-8">
             {cardValues.map((value) => (
               <button

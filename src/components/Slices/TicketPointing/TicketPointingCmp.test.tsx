@@ -103,7 +103,6 @@ describe("TicketPointingCmp", () => {
     expect(screen.getByRole("button", { name: "5" })).toHaveClass(
       "bg-pink-500",
     );
-    expect(screen.getByText("Locked until Reset")).toBeInTheDocument();
   });
 
   it("copies the invite link to the clipboard", async () => {

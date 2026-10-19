@@ -159,50 +159,17 @@ describe("useTicketPointing", () => {
     expect(result.current.isColorTaken("Pink")).toBe(true);
   });
 
-  it("selects a card value and locks the deck until reset", async () => {
+  it("selects a card value from the Fibonacci cards", async () => {
     const { result } = await mountConnected();
 
     joinAs(result, "Ayse");
 
-    expect(result.current.canChangeDeck).toBe(true);
-
-    act(() => {
-      result.current.handleSelectValue(5);
-    });
-
-    expect(result.current.selectedValue).toBe(5);
-    expect(result.current.canChangeDeck).toBe(false);
-
-    act(() => {
-      result.current.setDeck("fibonacci");
-    });
-
-    // Locked: deck change is ignored
-    expect(result.current.deck).toBe("standard");
-    expect(result.current.cardValues).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
-  });
-
-  it("switches decks while unlocked and clears incompatible selections", async () => {
-    const { result, channel } = await mountConnected();
-
-    joinAs(result, "Ayse");
-
-    act(() => {
-      result.current.setDeck("fibonacci");
-    });
-
-    expect(result.current.deck).toBe("fibonacci");
     expect(result.current.cardValues).toEqual([1, 2, 3, 5, 8, 13, 21]);
-    expect(channel.send).toHaveBeenCalledWith(
-      expect.objectContaining({
-        event: "state-sync",
-        payload: expect.objectContaining({ deck: "fibonacci" }),
-      }),
-    );
 
     act(() => {
       result.current.handleSelectValue(13);
     });
+
     expect(result.current.selectedValue).toBe(13);
   });
 
@@ -233,22 +200,6 @@ describe("useTicketPointing", () => {
     expect(result.current.revealed).toBe(false);
     expect(result.current.selectedValue).toBeNull();
     expect(result.current.roundId).not.toBe(previousRound);
-    expect(result.current.canChangeDeck).toBe(true);
-  });
-
-  it("adopts a peer's newer deck from a state-sync broadcast", async () => {
-    const { result, channel } = await mountConnected();
-
-    act(() => {
-      channel.emit("broadcast", "state-sync", {
-        deck: "fibonacci",
-        deckStamp: "000000999999999.peer",
-      });
-    });
-
-    await waitFor(() => {
-      expect(result.current.deck).toBe("fibonacci");
-    });
   });
 
   it("ignores a targeted state-sync meant for another client", async () => {
@@ -256,13 +207,12 @@ describe("useTicketPointing", () => {
 
     act(() => {
       channel.emit("broadcast", "state-sync", {
-        deck: "fibonacci",
-        deckStamp: "000000999999999.peer",
+        revealed: true,
         target: "someone-else",
       });
     });
 
-    expect(result.current.deck).toBe("standard");
+    expect(result.current.revealed).toBe(false);
   });
 
   it("builds participants and activeSelections from presence for the current round", async () => {

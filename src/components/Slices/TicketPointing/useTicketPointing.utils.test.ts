@@ -1,10 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   avatarColorClass,
-  createDeckStamp,
+  cardValues,
   createRoundId,
-  deckStampBeats,
-  decks,
   normalizeColor,
   normalizeName,
   normalizeRoomCode,
@@ -76,10 +74,9 @@ describe("avatarColorClass / selectedColorClass", () => {
   });
 });
 
-describe("decks", () => {
-  it("exposes the standard 1–8 deck and fibonacci sequence", () => {
-    expect(decks.standard).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
-    expect(decks.fibonacci).toEqual([1, 2, 3, 5, 8, 13, 21]);
+describe("cardValues", () => {
+  it("is the fibonacci sequence", () => {
+    expect(cardValues).toEqual([1, 2, 3, 5, 8, 13, 21]);
   });
 });
 
@@ -129,29 +126,6 @@ describe("round IDs", () => {
       const b = "00000002.000000000000010.bbb";
       expect(roundIdBeats(a, b)).toBe(true);
       expect(roundIdBeats(b, a)).toBe(false);
-    });
-  });
-});
-
-describe("deck stamps", () => {
-  it("createDeckStamp is zero-padded and includes the client id", () => {
-    const stamp = createDeckStamp("client-42");
-    expect(stamp.endsWith(".client-42")).toBe(true);
-    expect(stamp.split(".")[0]).toHaveLength(15);
-  });
-
-  describe("deckStampBeats", () => {
-    it("treats empty current as primordial", () => {
-      expect(deckStampBeats("000000000000001.a", "")).toBe(true);
-      expect(deckStampBeats("", "000000000000001.a")).toBe(false);
-    });
-
-    it("uses last-write-wins lexicographic order", () => {
-      const older = "000000000000100.aaa";
-      const newer = "000000000000200.bbb";
-      expect(deckStampBeats(newer, older)).toBe(true);
-      expect(deckStampBeats(older, newer)).toBe(false);
-      expect(deckStampBeats(newer, newer)).toBe(false);
     });
   });
 });
