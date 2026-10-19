@@ -149,7 +149,7 @@ describe("TicketPointingCmp", () => {
       expect(screen.getByText(/You're in as Ayse/i)).toBeInTheDocument();
     });
 
-    const clientId = window.localStorage.getItem("ticket-pointing:client-id");
+    const clientId = window.sessionStorage.getItem("ticket-pointing:client-id");
     channel.presenceState.mockReturnValue({
       [clientId ?? "local"]: [
         {
@@ -217,7 +217,7 @@ describe("TicketPointingCmp", () => {
       expect(screen.getByText(/You're in as Ayse/i)).toBeInTheDocument();
     });
 
-    const clientId = window.localStorage.getItem("ticket-pointing:client-id");
+    const clientId = window.sessionStorage.getItem("ticket-pointing:client-id");
     channel.presenceState.mockReturnValue({
       [clientId ?? "local"]: [
         {
@@ -262,7 +262,7 @@ describe("TicketPointingCmp", () => {
       expect(screen.getByText(/You're in as Ayse/i)).toBeInTheDocument();
     });
 
-    const clientId = window.localStorage.getItem("ticket-pointing:client-id");
+    const clientId = window.sessionStorage.getItem("ticket-pointing:client-id");
     channel.presenceState.mockReturnValue({
       [clientId ?? "local"]: [
         {
@@ -333,7 +333,7 @@ describe("TicketPointingCmp", () => {
       expect(screen.getByText(/You're in as Ayse/i)).toBeInTheDocument();
     });
 
-    const clientId = window.localStorage.getItem("ticket-pointing:client-id");
+    const clientId = window.sessionStorage.getItem("ticket-pointing:client-id");
     channel.presenceState.mockReturnValue({
       [clientId ?? "local"]: [
         {

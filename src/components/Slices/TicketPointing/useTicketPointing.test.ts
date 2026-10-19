@@ -22,11 +22,13 @@ const slice = {
 describe("useTicketPointing", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    window.sessionStorage.clear();
     window.history.replaceState(null, "", "/");
     vi.clearAllMocks();
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.clearAllMocks();
   });
 
@@ -64,6 +66,70 @@ describe("useTicketPointing", () => {
       result.current.joinRoom();
     });
   };
+
+  it("keeps the presence key per tab (sessionStorage), not per browser", async () => {
+    const { channel, supabase } = await mountConnected();
+
+    const clientId = window.sessionStorage.getItem("ticket-pointing:client-id");
+    expect(clientId).toBeTruthy();
+    expect(window.localStorage.getItem("ticket-pointing:client-id")).toBeNull();
+    expect(supabase.channel).toHaveBeenCalledWith(
+      "room:default-room",
+      expect.objectContaining({
+        config: { presence: { key: clientId } },
+      }),
+    );
+    expect(channel.track).toHaveBeenCalledWith(
+      expect.objectContaining({ clientId }),
+    );
+  });
+
+  it.each(["TIMED_OUT", "CLOSED"])(
+    "rebuilds the channel after a %s status and recovers",
+    async (status) => {
+      const { result, channel, supabase } = await mountConnected();
+      expect(supabase.channel).toHaveBeenCalledTimes(1);
+
+      vi.useFakeTimers();
+      act(() => {
+        channel.completeSubscribe(status);
+      });
+
+      expect(result.current.connectionState).toBe("connecting");
+      expect(result.current.error).toMatch(/reconnecting/i);
+
+      // Repeat failure statuses for the same drop must not stack timers
+      act(() => {
+        channel.completeSubscribe(status);
+      });
+
+      act(() => {
+        vi.advanceTimersByTime(2000);
+      });
+
+      expect(supabase.channel).toHaveBeenCalledTimes(2);
+
+      act(() => {
+        channel.completeSubscribe("SUBSCRIBED");
+      });
+
+      expect(result.current.connectionState).toBe("connected");
+      expect(result.current.error).toBeNull();
+    },
+  );
+
+  it("does not reconnect when the channel closes because the hook unmounted", async () => {
+    const { channel, supabase, unmount } = await mountConnected();
+
+    vi.useFakeTimers();
+    unmount();
+    act(() => {
+      channel.completeSubscribe("CLOSED");
+      vi.advanceTimersByTime(20000);
+    });
+
+    expect(supabase.channel).toHaveBeenCalledTimes(1);
+  });
 
   it("uses the slice room id by default and builds a share URL", async () => {
     const { result } = await mountConnected();

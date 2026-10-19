@@ -178,8 +178,9 @@ export const normalizeRoomCode = (code?: string) =>
 // Per-browser preference: remember the user's last room between visits.
 const ROOM_STORAGE_KEY = "ticket-pointing:last-room";
 
-// Stable browser identity so a refresh reuses the same presence key instead of
-// appearing as a brand-new client in the room.
+// Stable per-tab identity so a refresh reuses the same presence key instead of
+// appearing as a brand-new client in the room. Kept in sessionStorage so two
+// tabs in one browser never share a presence key (and overwrite each other).
 const CLIENT_ID_STORAGE_KEY = "ticket-pointing:client-id";
 
 // Per-room display name + color so refresh can auto-rejoin the same seat.
@@ -215,13 +216,21 @@ const writeStoredValue = (key: string, value: string) => {
 };
 
 const getOrCreateStoredClientId = () => {
-  const stored = readStoredValue(CLIENT_ID_STORAGE_KEY);
-  if (stored) {
-    return stored;
+  if (typeof window === "undefined") {
+    return createClientId();
   }
-  const id = createClientId();
-  writeStoredValue(CLIENT_ID_STORAGE_KEY, id);
-  return id;
+  try {
+    const stored = window.sessionStorage.getItem(CLIENT_ID_STORAGE_KEY);
+    if (stored) {
+      return stored;
+    }
+    const id = createClientId();
+    window.sessionStorage.setItem(CLIENT_ID_STORAGE_KEY, id);
+    return id;
+  } catch {
+    // Storage disabled: fall back to an id that lives as long as this hook
+    return createClientId();
+  }
 };
 
 const readStoredRoomIdentities = (): Record<string, StoredIdentity> => {
@@ -280,6 +289,16 @@ const clearStoredRoomIdentity = (roomCode: string) => {
   delete stored[roomCode];
   writeStoredValue(ROOM_IDENTITY_STORAGE_KEY, JSON.stringify(stored));
 };
+
+// Reconnect backoff after the room channel drops: 1s, 2s, 4s ... capped, with
+// jitter so a room-wide blip doesn't make everyone resubscribe in lockstep.
+const RECONNECT_BASE_MS = 1000;
+const RECONNECT_MAX_MS = 15000;
+const RECONNECT_JITTER_MS = 500;
+
+const reconnectDelayMs = (attempt: number) =>
+  Math.min(RECONNECT_BASE_MS * 2 ** attempt, RECONNECT_MAX_MS) +
+  Math.random() * RECONNECT_JITTER_MS;
 
 type ConnectionState = "idle" | "connecting" | "connected" | "error";
 
@@ -378,6 +397,9 @@ export const useTicketPointing = (
   const [error, setError] = useState<string | null>(null);
   // True after the first presence sync for the current channel subscription.
   const [presenceReady, setPresenceReady] = useState(false);
+  // Bumped to tear down and rebuild the room channel after it drops.
+  const [reconnectNonce, setReconnectNonce] = useState(0);
+  const reconnectAttemptRef = useRef(0);
   // Prevents auto-rejoin from retrying forever when the stored seat is taken.
   const autoRejoinAttemptedRef = useRef<string | null>(null);
   // Active rock-paper-scissors match for who takes the ticket.
@@ -500,6 +522,24 @@ export const useTicketPointing = (
       config: { presence: { key: clientId } },
     });
 
+    // Set on cleanup so the CLOSED status from our own unsubscribe isn't
+    // mistaken for a dropped connection.
+    let disposed = false;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+    // Rebuild the channel after a backoff. Idempotent: several failure
+    // statuses can arrive for one drop.
+    const scheduleReconnect = () => {
+      if (reconnectTimer) {
+        return;
+      }
+      const delay = reconnectDelayMs(reconnectAttemptRef.current);
+      reconnectAttemptRef.current += 1;
+      reconnectTimer = setTimeout(() => {
+        setReconnectNonce((nonce) => nonce + 1);
+      }, delay);
+    };
+
     channelRef.current = channel;
     setConnectionState("connecting");
     setPresenceReady(false);
@@ -616,8 +656,14 @@ export const useTicketPointing = (
 
     // Subscribe and publish initial presence
     channel.subscribe((status) => {
+      if (disposed) {
+        return;
+      }
+
       if (status === "SUBSCRIBED") {
+        reconnectAttemptRef.current = 0;
         setConnectionState("connected");
+        setError(null);
         channel.track({
           clientId,
           name: selectedNameRef.current ?? undefined,
@@ -634,20 +680,35 @@ export const useTicketPointing = (
 
       if (status === "CHANNEL_ERROR") {
         setConnectionState("error");
-        setError("Unable to connect to the room channel.");
+        setError("Unable to connect to the room channel. Retrying…");
+        scheduleReconnect();
+      }
+
+      // A join that never completes, or a channel closed out from under us
+      // (network drop, laptop sleep, server-side close): retry instead of
+      // leaving a stale "connected" room.
+      if (status === "TIMED_OUT" || status === "CLOSED") {
+        setConnectionState("connecting");
+        setError("Connection lost. Reconnecting…");
+        scheduleReconnect();
       }
     });
 
     return () => {
+      disposed = true;
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
       channel.unsubscribe();
       supabase.removeChannel(channel);
       channelRef.current = null;
       setConnectionState("idle");
     };
-    // Subscribe once per room; presence updates flow through the track effect
-    // below, so local state changes never force a channel reconnect.
+    // Subscribe once per room (and again only after a drop); presence updates
+    // flow through the track effect below, so local state changes never force
+    // a channel reconnect.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [supabase, roomCode, clientId]);
+  }, [supabase, roomCode, clientId, reconnectNonce]);
 
   // Keep presence updated as local state changes
   useEffect(() => {
