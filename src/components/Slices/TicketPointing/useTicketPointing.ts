@@ -27,53 +27,35 @@ export type PresencePayload = {
   clientId: string;
   name?: string;
   color?: string;
+  // Votes and the round travel over broadcast ("vote" events), not presence:
+  // Supabase caps each client at 5 presence updates per 30s and closes the
+  // channel past that. These are only read from older clients still sending
+  // them via presence.
+  selectedValue?: number | null;
+  roundId?: string;
+};
+
+// A client's current vote, exchanged as a broadcast "vote" event.
+type VotePayload = {
+  clientId: string;
   selectedValue: number | null;
   roundId: string;
-  // The deck (+ its version) this client currently sees, so peers and new
-  // joiners can converge on the room's shared deck.
-  deck?: DeckId;
-  deckStamp?: string;
 };
 
-// Available card decks. The active deck is shared across everyone in a room
-// (synced like the reveal/round state). Votes are exchanged as raw numbers.
-export type DeckId = "standard" | "fibonacci";
-
-export const decks: Record<DeckId, number[]> = {
-  // The original 1–8 deck
-  standard: Array.from({ length: 8 }, (_, index) => index + 1),
-  // Classic Fibonacci planning-poker deck
-  fibonacci: [1, 2, 3, 5, 8, 13, 21],
-};
-
-export const deckOptions: { id: DeckId; label: string }[] = [
-  { id: "standard", label: "Standard" },
-  { id: "fibonacci", label: "Fibonacci" },
-];
-
-const isDeckId = (value: unknown): value is DeckId =>
-  value === "standard" || value === "fibonacci";
-
-// Deck changes use a last-write-wins version stamp: "mintedAt.clientId", with
-// mintedAt zero-padded so lexicographic order matches chronological order. The
-// most recently chosen deck wins; ties break deterministically on clientId, so
-// every client in the room converges on the same deck.
-export const createDeckStamp = (clientId: string) =>
-  `${String(Date.now()).padStart(15, "0")}.${clientId}`;
-
-// Whether candidate should replace current as the room's active deck. The empty
-// string is the primordial stamp every client starts on; any real stamp beats
-// it, and it never beats anything.
-export const deckStampBeats = (candidate: string, current: string) => {
-  if (!candidate || candidate === current) {
+const isVotePayload = (value: unknown): value is VotePayload => {
+  if (!value || typeof value !== "object") {
     return false;
   }
-  if (!current) {
-    return true;
-  }
-
-  return candidate > current;
+  const vote = value as Record<string, unknown>;
+  return (
+    typeof vote.clientId === "string" &&
+    typeof vote.roundId === "string" &&
+    (vote.selectedValue === null || typeof vote.selectedValue === "number")
+  );
 };
+
+// Card values everyone in a room points with (Fibonacci).
+export const cardValues = [1, 2, 3, 5, 8, 13, 21];
 
 // Allowed avatar colors
 export const colorOptions = [
@@ -219,8 +201,9 @@ export const normalizeRoomCode = (code?: string) =>
 // Per-browser preference: remember the user's last room between visits.
 const ROOM_STORAGE_KEY = "ticket-pointing:last-room";
 
-// Stable browser identity so a refresh reuses the same presence key instead of
-// appearing as a brand-new client in the room.
+// Stable per-tab identity so a refresh reuses the same presence key instead of
+// appearing as a brand-new client in the room. Kept in sessionStorage so two
+// tabs in one browser never share a presence key (and overwrite each other).
 const CLIENT_ID_STORAGE_KEY = "ticket-pointing:client-id";
 
 // Per-room display name + color so refresh can auto-rejoin the same seat.
@@ -256,13 +239,21 @@ const writeStoredValue = (key: string, value: string) => {
 };
 
 const getOrCreateStoredClientId = () => {
-  const stored = readStoredValue(CLIENT_ID_STORAGE_KEY);
-  if (stored) {
-    return stored;
+  if (typeof window === "undefined") {
+    return createClientId();
   }
-  const id = createClientId();
-  writeStoredValue(CLIENT_ID_STORAGE_KEY, id);
-  return id;
+  try {
+    const stored = window.sessionStorage.getItem(CLIENT_ID_STORAGE_KEY);
+    if (stored) {
+      return stored;
+    }
+    const id = createClientId();
+    window.sessionStorage.setItem(CLIENT_ID_STORAGE_KEY, id);
+    return id;
+  } catch {
+    // Storage disabled: fall back to an id that lives as long as this hook
+    return createClientId();
+  }
 };
 
 const readStoredRoomIdentities = (): Record<string, StoredIdentity> => {
@@ -286,8 +277,15 @@ const readStoredRoomIdentities = (): Record<string, StoredIdentity> => {
         ) {
           const name = (value as StoredIdentity).name.trim();
           const color = (value as StoredIdentity).color.trim();
+          const { selectedValue, roundId } = value as StoredIdentity;
           if (name && color) {
-            result[room] = { name, color };
+            // Keep the saved vote + round so a refresh can restore the vote
+            result[room] = {
+              name,
+              color,
+              ...(typeof selectedValue === "number" ? { selectedValue } : {}),
+              ...(typeof roundId === "string" ? { roundId } : {}),
+            };
           }
         }
       },
@@ -322,61 +320,19 @@ const clearStoredRoomIdentity = (roomCode: string) => {
   writeStoredValue(ROOM_IDENTITY_STORAGE_KEY, JSON.stringify(stored));
 };
 
-// Per-browser, per-room deck memory. The deck IS shared room state, but we
-// still remember — per room — the last deck decision this browser saw (deck +
-// its version stamp) so reopening a room restores its number system right away.
-// The stamp is stored alongside the deck, so on reconnect the room's normal
-// last-write-wins convergence still settles ties: a peer holding a newer
-// decision wins, and this browser only re-propagates its stored deck when that
-// decision is genuinely the most recent one known.
-const ROOM_DECKS_STORAGE_KEY = "ticket-pointing:room-decks";
+// Reconnect backoff after the room channel drops: 1s, 2s, 4s ... capped, with
+// jitter so a room-wide blip doesn't make everyone resubscribe in lockstep.
+const RECONNECT_BASE_MS = 1000;
+const RECONNECT_MAX_MS = 15000;
+const RECONNECT_JITTER_MS = 500;
 
-type StoredDeck = { deck: DeckId; deckStamp: string };
+// How long a joiner waits for peers' join-handshake replies before assuming
+// the room is empty (nobody to answer) and carrying on with what it has.
+const HANDSHAKE_TIMEOUT_MS = 1500;
 
-const readStoredRoomDecks = (): Record<string, StoredDeck> => {
-  const raw = readStoredValue(ROOM_DECKS_STORAGE_KEY);
-  if (!raw) {
-    return {};
-  }
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") {
-      return {};
-    }
-    const result: Record<string, StoredDeck> = {};
-    Object.entries(parsed as Record<string, unknown>).forEach(
-      ([room, value]) => {
-        if (
-          value &&
-          typeof value === "object" &&
-          isDeckId((value as Record<string, unknown>).deck) &&
-          typeof (value as Record<string, unknown>).deckStamp === "string"
-        ) {
-          result[room] = {
-            deck: (value as StoredDeck).deck,
-            deckStamp: (value as StoredDeck).deckStamp,
-          };
-        }
-      },
-    );
-    return result;
-  } catch {
-    return {};
-  }
-};
-
-const readStoredRoomDeck = (roomCode: string): StoredDeck | null =>
-  readStoredRoomDecks()[roomCode] ?? null;
-
-const writeStoredRoomDeck = (
-  roomCode: string,
-  deck: DeckId,
-  deckStamp: string,
-) => {
-  const stored = readStoredRoomDecks();
-  stored[roomCode] = { deck, deckStamp };
-  writeStoredValue(ROOM_DECKS_STORAGE_KEY, JSON.stringify(stored));
-};
+const reconnectDelayMs = (attempt: number) =>
+  Math.min(RECONNECT_BASE_MS * 2 ** attempt, RECONNECT_MAX_MS) +
+  Math.random() * RECONNECT_JITTER_MS;
 
 type ConnectionState = "idle" | "connecting" | "connected" | "error";
 
@@ -404,9 +360,6 @@ type TicketPointingHookResult = {
   activeSelections: Record<string, number | null>;
   hasAvailableColor: boolean;
   cardValues: number[];
-  deck: DeckId;
-  deckOptions: { id: DeckId; label: string }[];
-  setDeck: (deck: DeckId) => void;
   isColorTaken: (color: string) => boolean;
   isNameTaken: (name: string) => boolean;
   setRoomInput: (value: string) => void;
@@ -415,7 +368,6 @@ type TicketPointingHookResult = {
   setPendingColorChoice: (color: string) => void;
   joinRoom: () => void;
   leaveRoom: () => void;
-  canChangeDeck: boolean;
   handleSelectValue: (value: number) => void;
   handleReveal: () => void;
   handleReset: () => void;
@@ -462,11 +414,6 @@ export const useTicketPointing = (
   const [pendingColor, setPendingColor] = useState("Blue");
   const [joinError, setJoinError] = useState<string | null>(null);
   const [selectedValue, setSelectedValue] = useState<number | null>(null);
-  // Active deck shared across the room, plus its last-write-wins version stamp.
-  // Starts on the primordial stamp ("") so fresh clients are already converged.
-  const [deck, setDeckState] = useState<DeckId>("standard");
-  const [deckStamp, setDeckStamp] = useState<string>("");
-  const cardValues = decks[deck];
   const [revealed, setRevealed] = useState(false);
   // Current round. Starts as the shared primordial round (""), so clients
   // that load an empty room at the same time are already converged; real
@@ -475,15 +422,25 @@ export const useTicketPointing = (
   // Stable client ID for presence tracking (persisted so refresh reuses the
   // same seat instead of minting a new anonymous client).
   const clientId = useMemo(() => getOrCreateStoredClientId(), []);
-  // Raw presence state keyed by clientId
-  const [presenceByClientId, setPresenceByClientId] = useState<
+  // Raw presence state keyed by clientId (identity only)
+  const [livePresence, setLivePresence] = useState<
     Record<string, PresencePayload>
+  >({});
+  // Latest vote seen from each client (broadcast), merged with presence below
+  const [votesByClientId, setVotesByClientId] = useState<
+    Record<string, VotePayload>
   >({});
   const [connectionState, setConnectionState] =
     useState<ConnectionState>("idle");
   const [error, setError] = useState<string | null>(null);
   // True after the first presence sync for the current channel subscription.
   const [presenceReady, setPresenceReady] = useState(false);
+  // True once a peer answered our join handshake (so the room's round is
+  // adopted) or the wait timed out because the room is empty.
+  const [handshakeReady, setHandshakeReady] = useState(false);
+  // Bumped to tear down and rebuild the room channel after it drops.
+  const [reconnectNonce, setReconnectNonce] = useState(0);
+  const reconnectAttemptRef = useRef(0);
   // Prevents auto-rejoin from retrying forever when the stored seat is taken.
   const autoRejoinAttemptedRef = useRef<string | null>(null);
   // Active rock-paper-scissors match for who takes the ticket.
@@ -496,17 +453,7 @@ export const useTicketPointing = (
   const selectedNameRef = useRef(selectedName);
   const selectedColorRef = useRef(selectedColor);
   const selectedValueRef = useRef(selectedValue);
-  const deckRef = useRef(deck);
-  const deckStampRef = useRef(deckStamp);
   const rpsGameRef = useRef(rpsGame);
-
-  useEffect(() => {
-    deckRef.current = deck;
-  }, [deck]);
-
-  useEffect(() => {
-    deckStampRef.current = deckStamp;
-  }, [deckStamp]);
 
   useEffect(() => {
     rpsGameRef.current = rpsGame;
@@ -557,16 +504,6 @@ export const useTicketPointing = (
       setPendingColor(storedIdentity.color);
     }
 
-    // Restore this room's remembered deck (number system) for this browser, so
-    // reopening the room lands on the same deck instead of resetting to
-    // standard. Live convergence still runs once connected.
-    const storedDeck = readStoredRoomDeck(initialRoom || roomCode);
-    if (storedDeck) {
-      deckRef.current = storedDeck.deck;
-      deckStampRef.current = storedDeck.deckStamp;
-      setDeckState(storedDeck.deck);
-      setDeckStamp(storedDeck.deckStamp);
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -590,16 +527,6 @@ export const useTicketPointing = (
     // Remember this room so it reopens on the user's next visit
     writeStoredValue(ROOM_STORAGE_KEY, roomCode);
   }, [hasMounted, roomCode]);
-
-  // Remember this room's deck for this browser so it reopens on the same number
-  // system. Only real (non-primordial) deck decisions are persisted; the empty
-  // stamp is the default that reading nothing already yields.
-  useEffect(() => {
-    if (!hasMounted || !deckStamp) {
-      return;
-    }
-    writeStoredRoomDeck(roomCode, deck, deckStamp);
-  }, [hasMounted, roomCode, deck, deckStamp]);
 
   const applyIncomingRps = (
     incoming: RpsGame | null,
@@ -636,9 +563,29 @@ export const useTicketPointing = (
       config: { presence: { key: clientId } },
     });
 
+    // Set on cleanup so the CLOSED status from our own unsubscribe isn't
+    // mistaken for a dropped connection.
+    let disposed = false;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let handshakeTimer: ReturnType<typeof setTimeout> | null = null;
+
+    // Rebuild the channel after a backoff. Idempotent: several failure
+    // statuses can arrive for one drop.
+    const scheduleReconnect = () => {
+      if (reconnectTimer) {
+        return;
+      }
+      const delay = reconnectDelayMs(reconnectAttemptRef.current);
+      reconnectAttemptRef.current += 1;
+      reconnectTimer = setTimeout(() => {
+        setReconnectNonce((nonce) => nonce + 1);
+      }, delay);
+    };
+
     channelRef.current = channel;
     setConnectionState("connecting");
     setPresenceReady(false);
+    setHandshakeReady(false);
     rpsGameRef.current = null;
     setRpsGame(null);
 
@@ -655,52 +602,39 @@ export const useTicketPointing = (
         });
       });
 
-      setPresenceByClientId(nextPresence);
+      setLivePresence(nextPresence);
       setPresenceReady(true);
+    });
 
-      // Converge on the winning round advertised by peers. Heals clients
-      // that missed a reset broadcast (e.g. after a brief reconnect).
-      let bestRoundId = roundIdRef.current;
-      Object.values(nextPresence).forEach((presence) => {
+    // Record a peer's vote, and adopt its round when that round beats ours
+    // (heals clients that missed a reset broadcast, e.g. after a reconnect).
+    const applyIncomingVote = (vote: VotePayload) => {
+      if (vote.clientId === clientId) {
+        return;
+      }
+      setVotesByClientId((current) => {
+        const existing = current[vote.clientId];
         if (
-          typeof presence.roundId === "string" &&
-          roundIdBeats(presence.roundId, bestRoundId)
+          existing &&
+          existing.roundId === vote.roundId &&
+          existing.selectedValue === vote.selectedValue
         ) {
-          bestRoundId = presence.roundId;
+          return current;
         }
+        return { ...current, [vote.clientId]: vote };
       });
-      if (bestRoundId !== roundIdRef.current) {
-        roundIdRef.current = bestRoundId;
-        setRoundId(bestRoundId);
+
+      if (roundIdBeats(vote.roundId, roundIdRef.current)) {
+        roundIdRef.current = vote.roundId;
+        setRoundId(vote.roundId);
         setSelectedValue(null);
         setRevealed(false);
       }
+    };
 
-      // Converge on the winning deck advertised by peers (last-write-wins).
-      // Heals clients that missed a deck-change broadcast.
-      let bestDeck = deckRef.current;
-      let bestDeckStamp = deckStampRef.current;
-      Object.values(nextPresence).forEach((presence) => {
-        if (
-          typeof presence.deckStamp === "string" &&
-          isDeckId(presence.deck) &&
-          deckStampBeats(presence.deckStamp, bestDeckStamp)
-        ) {
-          bestDeck = presence.deck;
-          bestDeckStamp = presence.deckStamp;
-        }
-      });
-      if (bestDeckStamp !== deckStampRef.current) {
-        deckRef.current = bestDeck;
-        deckStampRef.current = bestDeckStamp;
-        setDeckState(bestDeck);
-        setDeckStamp(bestDeckStamp);
-        if (
-          selectedValueRef.current !== null &&
-          !decks[bestDeck].includes(selectedValueRef.current)
-        ) {
-          setSelectedValue(null);
-        }
+    channel.on("broadcast", { event: "vote" }, ({ payload }) => {
+      if (isVotePayload(payload)) {
+        applyIncomingVote(payload);
       }
     });
 
@@ -714,8 +648,13 @@ export const useTicketPointing = (
         payload: {
           revealed: revealedRef.current,
           roundId: roundIdRef.current,
-          deck: deckRef.current,
-          deckStamp: deckStampRef.current,
+          vote: selectedNameRef.current
+            ? {
+                clientId,
+                selectedValue: selectedValueRef.current,
+                roundId: roundIdRef.current,
+              }
+            : null,
           rps: rpsPayloadForSync(rpsGameRef.current),
           target: payload?.requesterId ?? null,
         },
@@ -732,6 +671,9 @@ export const useTicketPointing = (
       // untargeted syncs (reveal/reset) apply to everyone.
       if (payload.target && payload.target !== clientId) {
         return;
+      }
+      if (payload.target === clientId) {
+        setHandshakeReady(true);
       }
 
       const incomingRoundId =
@@ -756,25 +698,9 @@ export const useTicketPointing = (
         setRevealed(payload.revealed);
       }
 
-      // Adopt the room's deck when the incoming stamp is newer (last-write-wins)
-      const incomingDeckStamp =
-        typeof payload.deckStamp === "string" ? payload.deckStamp : null;
-      if (
-        incomingDeckStamp &&
-        isDeckId(payload.deck) &&
-        deckStampBeats(incomingDeckStamp, deckStampRef.current)
-      ) {
-        const incomingDeck: DeckId = payload.deck;
-        deckRef.current = incomingDeck;
-        deckStampRef.current = incomingDeckStamp;
-        setDeckState(incomingDeck);
-        setDeckStamp(incomingDeckStamp);
-        if (
-          selectedValueRef.current !== null &&
-          !decks[incomingDeck].includes(selectedValueRef.current)
-        ) {
-          setSelectedValue(null);
-        }
+      // A joiner learns each peer's current vote from their handshake reply
+      if (isVotePayload(payload.vote)) {
+        applyIncomingVote(payload.vote);
       }
 
       // Adopt an in-flight RPS match from the join handshake. Ignore null —
@@ -802,65 +728,115 @@ export const useTicketPointing = (
 
     // Subscribe and publish initial presence
     channel.subscribe((status) => {
+      if (disposed) {
+        return;
+      }
+
       if (status === "SUBSCRIBED") {
+        reconnectAttemptRef.current = 0;
         setConnectionState("connected");
-        channel.track({
-          clientId,
-          name: selectedNameRef.current ?? undefined,
-          color: selectedNameRef.current ? selectedColorRef.current : undefined,
-          selectedValue: selectedValueRef.current,
-          roundId: roundIdRef.current,
-          deck: deckRef.current,
-          deckStamp: deckStampRef.current,
-        });
+        setError(null);
+        // Presence is published by the effect below once connected.
         channel.send({
           type: "broadcast",
           event: "state-request",
           payload: { requesterId: clientId },
         });
+        handshakeTimer = setTimeout(
+          () => setHandshakeReady(true),
+          HANDSHAKE_TIMEOUT_MS,
+        );
       }
 
       if (status === "CHANNEL_ERROR") {
         setConnectionState("error");
-        setError("Unable to connect to the room channel.");
+        setError("Unable to connect to the room channel. Retrying…");
+        scheduleReconnect();
+      }
+
+      // A join that never completes, or a channel closed out from under us
+      // (network drop, laptop sleep, server-side close): retry instead of
+      // leaving a stale "connected" room.
+      if (status === "TIMED_OUT" || status === "CLOSED") {
+        setConnectionState("connecting");
+        setError("Connection lost. Reconnecting…");
+        scheduleReconnect();
       }
     });
 
     return () => {
+      disposed = true;
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
+      if (handshakeTimer) {
+        clearTimeout(handshakeTimer);
+      }
       channel.unsubscribe();
       supabase.removeChannel(channel);
       channelRef.current = null;
       setConnectionState("idle");
     };
-    // Subscribe once per room; presence updates flow through the track effect
-    // below, so local state changes never force a channel reconnect.
+    // Subscribe once per room (and again only after a drop); presence updates
+    // flow through the track effect below, so local state changes never force
+    // a channel reconnect.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [supabase, roomCode, clientId]);
+  }, [supabase, roomCode, clientId, reconnectNonce]);
 
-  // Keep presence updated as local state changes
+  // Publish presence (identity only) once connected, and when it changes.
+  // Anonymous viewers publish nothing. Keep this rare: Supabase allows each
+  // client only 5 presence updates per 30s before closing the channel.
+  const presenceTrackedRef = useRef(false);
   useEffect(() => {
-    if (!channelRef.current) {
+    const channel = channelRef.current;
+    if (!channel || connectionState !== "connected") {
+      presenceTrackedRef.current = false;
       return;
     }
 
-    channelRef.current.track({
-      clientId,
-      name: selectedName ?? undefined,
-      color: selectedName ? selectedColor : undefined,
-      selectedValue,
-      roundId,
-      deck,
-      deckStamp,
+    if (selectedName) {
+      presenceTrackedRef.current = true;
+      channel.track({ clientId, name: selectedName, color: selectedColor });
+    } else if (presenceTrackedRef.current) {
+      presenceTrackedRef.current = false;
+      channel.untrack();
+    }
+  }, [clientId, connectionState, selectedName, selectedColor]);
+
+  // Broadcast our vote whenever it (or the round) changes. Peers adopt the
+  // round from it too, so it also heals missed resets.
+  useEffect(() => {
+    const channel = channelRef.current;
+    if (!channel || connectionState !== "connected" || !selectedName) {
+      return;
+    }
+
+    setVotesByClientId((current) => ({
+      ...current,
+      [clientId]: { clientId, selectedValue, roundId },
+    }));
+    channel.send({
+      type: "broadcast",
+      event: "vote",
+      payload: { clientId, selectedValue, roundId },
     });
-  }, [
-    clientId,
-    selectedName,
-    selectedColor,
-    selectedValue,
-    roundId,
-    deck,
-    deckStamp,
-  ]);
+  }, [clientId, connectionState, selectedName, selectedValue, roundId]);
+
+  // Presence (who is here) joined with each client's latest vote
+  const presenceByClientId = useMemo(() => {
+    const merged: Record<string, PresencePayload> = {};
+    Object.entries(livePresence).forEach(([id, presence]) => {
+      const vote = votesByClientId[id];
+      merged[id] = {
+        ...presence,
+        selectedValue: vote
+          ? vote.selectedValue
+          : (presence.selectedValue ?? null),
+        roundId: vote ? vote.roundId : (presence.roundId ?? ""),
+      };
+    });
+    return merged;
+  }, [livePresence, votesByClientId]);
 
   // Names already claimed by other clients (case-insensitive)
   const takenNames = useMemo(() => {
@@ -935,7 +911,14 @@ export const useTicketPointing = (
   // Prefill + auto-rejoin using the identity this browser last used in the room.
   // Waits until presence has synced so we don't steal a name someone else holds.
   useEffect(() => {
-    if (selectedName || connectionState !== "connected" || !presenceReady) {
+    // Wait for the handshake so the room's round is adopted first: restoring
+    // a saved vote only works when the stored round matches the current one.
+    if (
+      selectedName ||
+      connectionState !== "connected" ||
+      !presenceReady ||
+      !handshakeReady
+    ) {
       return;
     }
 
@@ -990,6 +973,7 @@ export const useTicketPointing = (
   }, [
     connectionState,
     presenceReady,
+    handshakeReady,
     roomCode,
     presenceByClientId,
     selectedName,
@@ -1012,14 +996,14 @@ export const useTicketPointing = (
       return;
     }
 
-    if (!decks[deck].includes(identity.selectedValue)) {
+    if (!cardValues.includes(identity.selectedValue)) {
       return;
     }
 
     // Don't resurrect a vote into a revealed round from a stale tab if the
     // room already moved on — matching roundId above covers the common case.
     setSelectedValue(identity.selectedValue);
-  }, [selectedName, selectedValue, roomCode, roundId, deck]);
+  }, [selectedName, selectedValue, roomCode, roundId]);
 
   // Keep the persisted seat in sync while joined (name/color/vote/round).
   useEffect(() => {
@@ -1063,48 +1047,9 @@ export const useTicketPointing = (
 
   const rpsResult = useMemo(() => computeRpsResult(rpsGame), [rpsGame]);
 
-  // Standard ↔ Fibonacci can still be flipped at the start of a round. Once
-  // anyone has pointed (or scores are revealed), lock the deck until Reset so
-  // one person can't yank the number system out from under everyone else.
-  const canChangeDeck = useMemo(() => {
-    if (revealed) {
-      return false;
-    }
-    if (selectedValue !== null) {
-      return false;
-    }
-    return !Object.values(activeSelections).some(
-      (selection) => selection !== null,
-    );
-  }, [revealed, selectedValue, activeSelections]);
-
   // Local selection; presence is updated via effect
   const handleSelectValue = (value: number) => {
     setSelectedValue(value);
-  };
-
-  // Change the deck for the whole room: mint a new stamp, update locally, and
-  // broadcast so every client converges (last-write-wins). Clears a selection
-  // the new deck no longer offers.
-  const setDeck = (next: DeckId) => {
-    if (!canChangeDeck || next === deckRef.current) {
-      return;
-    }
-
-    const stamp = createDeckStamp(clientId);
-    deckRef.current = next;
-    deckStampRef.current = stamp;
-    setDeckState(next);
-    setDeckStamp(stamp);
-    if (selectedValue !== null && !decks[next].includes(selectedValue)) {
-      setSelectedValue(null);
-    }
-
-    channelRef.current?.send({
-      type: "broadcast",
-      event: "state-sync",
-      payload: { deck: next, deckStamp: stamp },
-    });
   };
 
   // Reveal values for everyone in the room
@@ -1282,18 +1227,12 @@ export const useTicketPointing = (
     setSelectedName(null);
     setSelectedValue(null);
     setRevealed(false);
-    setPresenceByClientId({});
+    setLivePresence({});
+    setVotesByClientId({});
     setRoundId("");
     rpsGameRef.current = null;
     setRpsGame(null);
     autoRejoinAttemptedRef.current = null;
-    // Restore the target room's remembered deck for this browser (falling back
-    // to the primordial deck), then let the room's live convergence take over.
-    const storedDeck = readStoredRoomDeck(nextCode);
-    setDeckState(storedDeck?.deck ?? "standard");
-    setDeckStamp(storedDeck?.deckStamp ?? "");
-    deckRef.current = storedDeck?.deck ?? "standard";
-    deckStampRef.current = storedDeck?.deckStamp ?? "";
     // Prefill join form from this browser's last seat in the target room.
     const storedIdentity = readStoredRoomIdentity(nextCode);
     setPendingName(storedIdentity?.name ?? "");
@@ -1327,9 +1266,6 @@ export const useTicketPointing = (
     activeSelections,
     hasAvailableColor,
     cardValues,
-    deck,
-    deckOptions,
-    setDeck,
     isColorTaken,
     isNameTaken,
     setRoomInput,
@@ -1338,7 +1274,6 @@ export const useTicketPointing = (
     setPendingColorChoice,
     joinRoom,
     leaveRoom,
-    canChangeDeck,
     handleSelectValue,
     handleReveal,
     handleReset,

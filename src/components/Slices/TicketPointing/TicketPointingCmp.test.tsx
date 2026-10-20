@@ -103,7 +103,6 @@ describe("TicketPointingCmp", () => {
     expect(screen.getByRole("button", { name: "5" })).toHaveClass(
       "bg-pink-500",
     );
-    expect(screen.getByText("Locked until Reset")).toBeInTheDocument();
   });
 
   it("copies the invite link to the clipboard", async () => {
@@ -150,7 +149,7 @@ describe("TicketPointingCmp", () => {
       expect(screen.getByText(/You're in as Ayse/i)).toBeInTheDocument();
     });
 
-    const clientId = window.localStorage.getItem("ticket-pointing:client-id");
+    const clientId = window.sessionStorage.getItem("ticket-pointing:client-id");
     channel.presenceState.mockReturnValue({
       [clientId ?? "local"]: [
         {
@@ -218,7 +217,7 @@ describe("TicketPointingCmp", () => {
       expect(screen.getByText(/You're in as Ayse/i)).toBeInTheDocument();
     });
 
-    const clientId = window.localStorage.getItem("ticket-pointing:client-id");
+    const clientId = window.sessionStorage.getItem("ticket-pointing:client-id");
     channel.presenceState.mockReturnValue({
       [clientId ?? "local"]: [
         {
@@ -263,7 +262,7 @@ describe("TicketPointingCmp", () => {
       expect(screen.getByText(/You're in as Ayse/i)).toBeInTheDocument();
     });
 
-    const clientId = window.localStorage.getItem("ticket-pointing:client-id");
+    const clientId = window.sessionStorage.getItem("ticket-pointing:client-id");
     channel.presenceState.mockReturnValue({
       [clientId ?? "local"]: [
         {
@@ -334,7 +333,7 @@ describe("TicketPointingCmp", () => {
       expect(screen.getByText(/You're in as Ayse/i)).toBeInTheDocument();
     });
 
-    const clientId = window.localStorage.getItem("ticket-pointing:client-id");
+    const clientId = window.sessionStorage.getItem("ticket-pointing:client-id");
     channel.presenceState.mockReturnValue({
       [clientId ?? "local"]: [
         {

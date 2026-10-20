@@ -6,6 +6,7 @@ export type MockChannel = {
   on: ReturnType<typeof vi.fn>;
   subscribe: ReturnType<typeof vi.fn>;
   track: ReturnType<typeof vi.fn>;
+  untrack: ReturnType<typeof vi.fn>;
   send: ReturnType<typeof vi.fn>;
   unsubscribe: ReturnType<typeof vi.fn>;
   presenceState: ReturnType<typeof vi.fn>;
@@ -32,6 +33,7 @@ export const createMockChannel = (): MockChannel => {
       return channel;
     }),
     track: vi.fn(() => Promise.resolve("ok")),
+    untrack: vi.fn(() => Promise.resolve("ok")),
     send: vi.fn(() => Promise.resolve("ok")),
     unsubscribe: vi.fn(() => Promise.resolve("ok")),
     presenceState: vi.fn(() => ({})),

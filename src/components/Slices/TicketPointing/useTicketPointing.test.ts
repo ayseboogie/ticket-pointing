@@ -22,11 +22,13 @@ const slice = {
 describe("useTicketPointing", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    window.sessionStorage.clear();
     window.history.replaceState(null, "", "/");
     vi.clearAllMocks();
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.clearAllMocks();
   });
 
@@ -64,6 +66,160 @@ describe("useTicketPointing", () => {
       result.current.joinRoom();
     });
   };
+
+  it("keeps the presence key per tab (sessionStorage), not per browser", async () => {
+    const { result, channel, supabase } = await mountConnected();
+
+    const clientId = window.sessionStorage.getItem("ticket-pointing:client-id");
+    expect(clientId).toBeTruthy();
+    expect(window.localStorage.getItem("ticket-pointing:client-id")).toBeNull();
+    expect(supabase.channel).toHaveBeenCalledWith(
+      "room:default-room",
+      expect.objectContaining({
+        config: { presence: { key: clientId } },
+      }),
+    );
+
+    // Anonymous viewers publish no presence at all
+    expect(channel.track).not.toHaveBeenCalled();
+
+    joinAs(result, "Ayse", "Pink");
+
+    expect(channel.track).toHaveBeenCalledWith({
+      clientId,
+      name: "Ayse",
+      color: "Pink",
+    });
+  });
+
+  it("sends votes over broadcast, never presence (5 presence updates / 30s cap)", async () => {
+    const { result, channel } = await mountConnected();
+
+    joinAs(result, "Ayse");
+    expect(channel.track).toHaveBeenCalledTimes(1);
+
+    for (const value of [1, 2, 3, 5, 8, 13, 21, 1, 2, 3]) {
+      act(() => {
+        result.current.handleSelectValue(value);
+      });
+    }
+
+    // Identity was published once; ten vote changes added no presence updates
+    expect(channel.track).toHaveBeenCalledTimes(1);
+    expect(channel.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "vote",
+        payload: expect.objectContaining({ selectedValue: 3 }),
+      }),
+    );
+  });
+
+  it("untracks presence on leave", async () => {
+    const { result, channel } = await mountConnected();
+
+    joinAs(result, "Ayse");
+    act(() => {
+      result.current.leaveRoom();
+    });
+
+    expect(channel.untrack).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows a peer's broadcast vote and adopts their newer round", async () => {
+    const { result, channel } = await mountConnected();
+
+    channel.presenceState.mockReturnValue({
+      "peer-1": [{ clientId: "peer-1", name: "Sam", color: "Teal" }],
+    });
+    act(() => {
+      channel.emit("presence", "sync");
+    });
+
+    const round = "00000001.000000000000100.abc";
+    act(() => {
+      channel.emit("broadcast", "vote", {
+        clientId: "peer-1",
+        selectedValue: 5,
+        roundId: round,
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.roundId).toBe(round);
+    });
+    expect(result.current.activeSelections.Sam).toBe(5);
+  });
+
+  it("includes our vote in the join-handshake reply once joined", async () => {
+    const { result, channel } = await mountConnected();
+
+    joinAs(result, "Ayse");
+    act(() => {
+      result.current.handleSelectValue(8);
+    });
+    channel.send.mockClear();
+
+    act(() => {
+      channel.emit("broadcast", "state-request", { requesterId: "newbie" });
+    });
+
+    expect(channel.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "state-sync",
+        payload: expect.objectContaining({
+          target: "newbie",
+          vote: expect.objectContaining({ selectedValue: 8 }),
+        }),
+      }),
+    );
+  });
+
+  it.each(["TIMED_OUT", "CLOSED"])(
+    "rebuilds the channel after a %s status and recovers",
+    async (status) => {
+      const { result, channel, supabase } = await mountConnected();
+      expect(supabase.channel).toHaveBeenCalledTimes(1);
+
+      vi.useFakeTimers();
+      act(() => {
+        channel.completeSubscribe(status);
+      });
+
+      expect(result.current.connectionState).toBe("connecting");
+      expect(result.current.error).toMatch(/reconnecting/i);
+
+      // Repeat failure statuses for the same drop must not stack timers
+      act(() => {
+        channel.completeSubscribe(status);
+      });
+
+      act(() => {
+        vi.advanceTimersByTime(2000);
+      });
+
+      expect(supabase.channel).toHaveBeenCalledTimes(2);
+
+      act(() => {
+        channel.completeSubscribe("SUBSCRIBED");
+      });
+
+      expect(result.current.connectionState).toBe("connected");
+      expect(result.current.error).toBeNull();
+    },
+  );
+
+  it("does not reconnect when the channel closes because the hook unmounted", async () => {
+    const { channel, supabase, unmount } = await mountConnected();
+
+    vi.useFakeTimers();
+    unmount();
+    act(() => {
+      channel.completeSubscribe("CLOSED");
+      vi.advanceTimersByTime(20000);
+    });
+
+    expect(supabase.channel).toHaveBeenCalledTimes(1);
+  });
 
   it("uses the slice room id by default and builds a share URL", async () => {
     const { result } = await mountConnected();
@@ -159,50 +315,17 @@ describe("useTicketPointing", () => {
     expect(result.current.isColorTaken("Pink")).toBe(true);
   });
 
-  it("selects a card value and locks the deck until reset", async () => {
+  it("selects a card value from the Fibonacci cards", async () => {
     const { result } = await mountConnected();
 
     joinAs(result, "Ayse");
 
-    expect(result.current.canChangeDeck).toBe(true);
-
-    act(() => {
-      result.current.handleSelectValue(5);
-    });
-
-    expect(result.current.selectedValue).toBe(5);
-    expect(result.current.canChangeDeck).toBe(false);
-
-    act(() => {
-      result.current.setDeck("fibonacci");
-    });
-
-    // Locked: deck change is ignored
-    expect(result.current.deck).toBe("standard");
-    expect(result.current.cardValues).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
-  });
-
-  it("switches decks while unlocked and clears incompatible selections", async () => {
-    const { result, channel } = await mountConnected();
-
-    joinAs(result, "Ayse");
-
-    act(() => {
-      result.current.setDeck("fibonacci");
-    });
-
-    expect(result.current.deck).toBe("fibonacci");
     expect(result.current.cardValues).toEqual([1, 2, 3, 5, 8, 13, 21]);
-    expect(channel.send).toHaveBeenCalledWith(
-      expect.objectContaining({
-        event: "state-sync",
-        payload: expect.objectContaining({ deck: "fibonacci" }),
-      }),
-    );
 
     act(() => {
       result.current.handleSelectValue(13);
     });
+
     expect(result.current.selectedValue).toBe(13);
   });
 
@@ -233,22 +356,6 @@ describe("useTicketPointing", () => {
     expect(result.current.revealed).toBe(false);
     expect(result.current.selectedValue).toBeNull();
     expect(result.current.roundId).not.toBe(previousRound);
-    expect(result.current.canChangeDeck).toBe(true);
-  });
-
-  it("adopts a peer's newer deck from a state-sync broadcast", async () => {
-    const { result, channel } = await mountConnected();
-
-    act(() => {
-      channel.emit("broadcast", "state-sync", {
-        deck: "fibonacci",
-        deckStamp: "000000999999999.peer",
-      });
-    });
-
-    await waitFor(() => {
-      expect(result.current.deck).toBe("fibonacci");
-    });
   });
 
   it("ignores a targeted state-sync meant for another client", async () => {
@@ -256,13 +363,12 @@ describe("useTicketPointing", () => {
 
     act(() => {
       channel.emit("broadcast", "state-sync", {
-        deck: "fibonacci",
-        deckStamp: "000000999999999.peer",
+        revealed: true,
         target: "someone-else",
       });
     });
 
-    expect(result.current.deck).toBe("standard");
+    expect(result.current.revealed).toBe(false);
   });
 
   it("builds participants and activeSelections from presence for the current round", async () => {
@@ -369,11 +475,55 @@ describe("useTicketPointing", () => {
     act(() => {
       channel.emit("presence", "sync");
     });
+    // An empty room never answers the handshake; the timeout lets us carry on
+    expect(result.current.isJoined).toBe(false);
+
+    await waitFor(
+      () => {
+        expect(result.current.selectedName).toBe("Ayse");
+        expect(result.current.selectedColor).toBe("Cyan");
+        expect(result.current.isJoined).toBe(true);
+      },
+      { timeout: 3000 },
+    );
+  });
+
+  it("restores a saved vote after rejoining, once the handshake adopts the room's round", async () => {
+    const round = "00000001.000000000000100.abc";
+    window.localStorage.setItem(
+      "ticket-pointing:room-identity",
+      JSON.stringify({
+        "default-room": {
+          name: "Ayse",
+          color: "Cyan",
+          selectedValue: 8,
+          roundId: round,
+        },
+      }),
+    );
+
+    const clientId = "me";
+    window.sessionStorage.setItem("ticket-pointing:client-id", clientId);
+    const { result, channel } = await mountConnected();
+
+    channel.presenceState.mockReturnValue({});
+    act(() => {
+      channel.emit("presence", "sync");
+    });
+    expect(result.current.isJoined).toBe(false);
+
+    // A peer answers the handshake with the room's current round
+    act(() => {
+      channel.emit("broadcast", "state-sync", {
+        roundId: round,
+        revealed: false,
+        target: clientId,
+      });
+    });
 
     await waitFor(() => {
-      expect(result.current.selectedName).toBe("Ayse");
-      expect(result.current.selectedColor).toBe("Cyan");
       expect(result.current.isJoined).toBe(true);
+      expect(result.current.selectedValue).toBe(8);
     });
   });
 
