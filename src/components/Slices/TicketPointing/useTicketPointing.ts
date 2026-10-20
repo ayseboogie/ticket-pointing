@@ -27,8 +27,31 @@ export type PresencePayload = {
   clientId: string;
   name?: string;
   color?: string;
+  // Votes and the round travel over broadcast ("vote" events), not presence:
+  // Supabase caps each client at 5 presence updates per 30s and closes the
+  // channel past that. These are only read from older clients still sending
+  // them via presence.
+  selectedValue?: number | null;
+  roundId?: string;
+};
+
+// A client's current vote, exchanged as a broadcast "vote" event.
+type VotePayload = {
+  clientId: string;
   selectedValue: number | null;
   roundId: string;
+};
+
+const isVotePayload = (value: unknown): value is VotePayload => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const vote = value as Record<string, unknown>;
+  return (
+    typeof vote.clientId === "string" &&
+    typeof vote.roundId === "string" &&
+    (vote.selectedValue === null || typeof vote.selectedValue === "number")
+  );
 };
 
 // Card values everyone in a room points with (Fibonacci).
@@ -388,9 +411,13 @@ export const useTicketPointing = (
   // Stable client ID for presence tracking (persisted so refresh reuses the
   // same seat instead of minting a new anonymous client).
   const clientId = useMemo(() => getOrCreateStoredClientId(), []);
-  // Raw presence state keyed by clientId
-  const [presenceByClientId, setPresenceByClientId] = useState<
+  // Raw presence state keyed by clientId (identity only)
+  const [livePresence, setLivePresence] = useState<
     Record<string, PresencePayload>
+  >({});
+  // Latest vote seen from each client (broadcast), merged with presence below
+  const [votesByClientId, setVotesByClientId] = useState<
+    Record<string, VotePayload>
   >({});
   const [connectionState, setConnectionState] =
     useState<ConnectionState>("idle");
@@ -559,25 +586,39 @@ export const useTicketPointing = (
         });
       });
 
-      setPresenceByClientId(nextPresence);
+      setLivePresence(nextPresence);
       setPresenceReady(true);
+    });
 
-      // Converge on the winning round advertised by peers. Heals clients
-      // that missed a reset broadcast (e.g. after a brief reconnect).
-      let bestRoundId = roundIdRef.current;
-      Object.values(nextPresence).forEach((presence) => {
+    // Record a peer's vote, and adopt its round when that round beats ours
+    // (heals clients that missed a reset broadcast, e.g. after a reconnect).
+    const applyIncomingVote = (vote: VotePayload) => {
+      if (vote.clientId === clientId) {
+        return;
+      }
+      setVotesByClientId((current) => {
+        const existing = current[vote.clientId];
         if (
-          typeof presence.roundId === "string" &&
-          roundIdBeats(presence.roundId, bestRoundId)
+          existing &&
+          existing.roundId === vote.roundId &&
+          existing.selectedValue === vote.selectedValue
         ) {
-          bestRoundId = presence.roundId;
+          return current;
         }
+        return { ...current, [vote.clientId]: vote };
       });
-      if (bestRoundId !== roundIdRef.current) {
-        roundIdRef.current = bestRoundId;
-        setRoundId(bestRoundId);
+
+      if (roundIdBeats(vote.roundId, roundIdRef.current)) {
+        roundIdRef.current = vote.roundId;
+        setRoundId(vote.roundId);
         setSelectedValue(null);
         setRevealed(false);
+      }
+    };
+
+    channel.on("broadcast", { event: "vote" }, ({ payload }) => {
+      if (isVotePayload(payload)) {
+        applyIncomingVote(payload);
       }
     });
 
@@ -591,6 +632,13 @@ export const useTicketPointing = (
         payload: {
           revealed: revealedRef.current,
           roundId: roundIdRef.current,
+          vote: selectedNameRef.current
+            ? {
+                clientId,
+                selectedValue: selectedValueRef.current,
+                roundId: roundIdRef.current,
+              }
+            : null,
           rps: rpsPayloadForSync(rpsGameRef.current),
           target: payload?.requesterId ?? null,
         },
@@ -631,6 +679,11 @@ export const useTicketPointing = (
         setRevealed(payload.revealed);
       }
 
+      // A joiner learns each peer's current vote from their handshake reply
+      if (isVotePayload(payload.vote)) {
+        applyIncomingVote(payload.vote);
+      }
+
       // Adopt an in-flight RPS match from the join handshake. Ignore null —
       // a dedicated rps-sync dismiss is the real clear, so a laggy handshake
       // can't wipe a game this client just started.
@@ -664,13 +717,7 @@ export const useTicketPointing = (
         reconnectAttemptRef.current = 0;
         setConnectionState("connected");
         setError(null);
-        channel.track({
-          clientId,
-          name: selectedNameRef.current ?? undefined,
-          color: selectedNameRef.current ? selectedColorRef.current : undefined,
-          selectedValue: selectedValueRef.current,
-          roundId: roundIdRef.current,
-        });
+        // Presence is published by the effect below once connected.
         channel.send({
           type: "broadcast",
           event: "state-request",
@@ -710,20 +757,60 @@ export const useTicketPointing = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase, roomCode, clientId, reconnectNonce]);
 
-  // Keep presence updated as local state changes
+  // Publish presence (identity only) once connected, and when it changes.
+  // Anonymous viewers publish nothing. Keep this rare: Supabase allows each
+  // client only 5 presence updates per 30s before closing the channel.
+  const presenceTrackedRef = useRef(false);
   useEffect(() => {
-    if (!channelRef.current) {
+    const channel = channelRef.current;
+    if (!channel || connectionState !== "connected") {
+      presenceTrackedRef.current = false;
       return;
     }
 
-    channelRef.current.track({
-      clientId,
-      name: selectedName ?? undefined,
-      color: selectedName ? selectedColor : undefined,
-      selectedValue,
-      roundId,
+    if (selectedName) {
+      presenceTrackedRef.current = true;
+      channel.track({ clientId, name: selectedName, color: selectedColor });
+    } else if (presenceTrackedRef.current) {
+      presenceTrackedRef.current = false;
+      channel.untrack();
+    }
+  }, [clientId, connectionState, selectedName, selectedColor]);
+
+  // Broadcast our vote whenever it (or the round) changes. Peers adopt the
+  // round from it too, so it also heals missed resets.
+  useEffect(() => {
+    const channel = channelRef.current;
+    if (!channel || connectionState !== "connected" || !selectedName) {
+      return;
+    }
+
+    setVotesByClientId((current) => ({
+      ...current,
+      [clientId]: { clientId, selectedValue, roundId },
+    }));
+    channel.send({
+      type: "broadcast",
+      event: "vote",
+      payload: { clientId, selectedValue, roundId },
     });
-  }, [clientId, selectedName, selectedColor, selectedValue, roundId]);
+  }, [clientId, connectionState, selectedName, selectedValue, roundId]);
+
+  // Presence (who is here) joined with each client's latest vote
+  const presenceByClientId = useMemo(() => {
+    const merged: Record<string, PresencePayload> = {};
+    Object.entries(livePresence).forEach(([id, presence]) => {
+      const vote = votesByClientId[id];
+      merged[id] = {
+        ...presence,
+        selectedValue: vote
+          ? vote.selectedValue
+          : (presence.selectedValue ?? null),
+        roundId: vote ? vote.roundId : (presence.roundId ?? ""),
+      };
+    });
+    return merged;
+  }, [livePresence, votesByClientId]);
 
   // Names already claimed by other clients (case-insensitive)
   const takenNames = useMemo(() => {
@@ -1106,7 +1193,8 @@ export const useTicketPointing = (
     setSelectedName(null);
     setSelectedValue(null);
     setRevealed(false);
-    setPresenceByClientId({});
+    setLivePresence({});
+    setVotesByClientId({});
     setRoundId("");
     rpsGameRef.current = null;
     setRpsGame(null);

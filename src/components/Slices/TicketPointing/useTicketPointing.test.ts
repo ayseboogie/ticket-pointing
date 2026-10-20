@@ -68,7 +68,7 @@ describe("useTicketPointing", () => {
   };
 
   it("keeps the presence key per tab (sessionStorage), not per browser", async () => {
-    const { channel, supabase } = await mountConnected();
+    const { result, channel, supabase } = await mountConnected();
 
     const clientId = window.sessionStorage.getItem("ticket-pointing:client-id");
     expect(clientId).toBeTruthy();
@@ -79,8 +79,98 @@ describe("useTicketPointing", () => {
         config: { presence: { key: clientId } },
       }),
     );
-    expect(channel.track).toHaveBeenCalledWith(
-      expect.objectContaining({ clientId }),
+
+    // Anonymous viewers publish no presence at all
+    expect(channel.track).not.toHaveBeenCalled();
+
+    joinAs(result, "Ayse", "Pink");
+
+    expect(channel.track).toHaveBeenCalledWith({
+      clientId,
+      name: "Ayse",
+      color: "Pink",
+    });
+  });
+
+  it("sends votes over broadcast, never presence (5 presence updates / 30s cap)", async () => {
+    const { result, channel } = await mountConnected();
+
+    joinAs(result, "Ayse");
+    expect(channel.track).toHaveBeenCalledTimes(1);
+
+    for (const value of [1, 2, 3, 5, 8, 13, 21, 1, 2, 3]) {
+      act(() => {
+        result.current.handleSelectValue(value);
+      });
+    }
+
+    // Identity was published once; ten vote changes added no presence updates
+    expect(channel.track).toHaveBeenCalledTimes(1);
+    expect(channel.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "vote",
+        payload: expect.objectContaining({ selectedValue: 3 }),
+      }),
+    );
+  });
+
+  it("untracks presence on leave", async () => {
+    const { result, channel } = await mountConnected();
+
+    joinAs(result, "Ayse");
+    act(() => {
+      result.current.leaveRoom();
+    });
+
+    expect(channel.untrack).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows a peer's broadcast vote and adopts their newer round", async () => {
+    const { result, channel } = await mountConnected();
+
+    channel.presenceState.mockReturnValue({
+      "peer-1": [{ clientId: "peer-1", name: "Sam", color: "Teal" }],
+    });
+    act(() => {
+      channel.emit("presence", "sync");
+    });
+
+    const round = "00000001.000000000000100.abc";
+    act(() => {
+      channel.emit("broadcast", "vote", {
+        clientId: "peer-1",
+        selectedValue: 5,
+        roundId: round,
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.roundId).toBe(round);
+    });
+    expect(result.current.activeSelections.Sam).toBe(5);
+  });
+
+  it("includes our vote in the join-handshake reply once joined", async () => {
+    const { result, channel } = await mountConnected();
+
+    joinAs(result, "Ayse");
+    act(() => {
+      result.current.handleSelectValue(8);
+    });
+    channel.send.mockClear();
+
+    act(() => {
+      channel.emit("broadcast", "state-request", { requesterId: "newbie" });
+    });
+
+    expect(channel.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "state-sync",
+        payload: expect.objectContaining({
+          target: "newbie",
+          vote: expect.objectContaining({ selectedValue: 8 }),
+        }),
+      }),
     );
   });
 
