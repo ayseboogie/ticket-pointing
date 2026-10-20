@@ -277,8 +277,15 @@ const readStoredRoomIdentities = (): Record<string, StoredIdentity> => {
         ) {
           const name = (value as StoredIdentity).name.trim();
           const color = (value as StoredIdentity).color.trim();
+          const { selectedValue, roundId } = value as StoredIdentity;
           if (name && color) {
-            result[room] = { name, color };
+            // Keep the saved vote + round so a refresh can restore the vote
+            result[room] = {
+              name,
+              color,
+              ...(typeof selectedValue === "number" ? { selectedValue } : {}),
+              ...(typeof roundId === "string" ? { roundId } : {}),
+            };
           }
         }
       },
@@ -318,6 +325,10 @@ const clearStoredRoomIdentity = (roomCode: string) => {
 const RECONNECT_BASE_MS = 1000;
 const RECONNECT_MAX_MS = 15000;
 const RECONNECT_JITTER_MS = 500;
+
+// How long a joiner waits for peers' join-handshake replies before assuming
+// the room is empty (nobody to answer) and carrying on with what it has.
+const HANDSHAKE_TIMEOUT_MS = 1500;
 
 const reconnectDelayMs = (attempt: number) =>
   Math.min(RECONNECT_BASE_MS * 2 ** attempt, RECONNECT_MAX_MS) +
@@ -424,6 +435,9 @@ export const useTicketPointing = (
   const [error, setError] = useState<string | null>(null);
   // True after the first presence sync for the current channel subscription.
   const [presenceReady, setPresenceReady] = useState(false);
+  // True once a peer answered our join handshake (so the room's round is
+  // adopted) or the wait timed out because the room is empty.
+  const [handshakeReady, setHandshakeReady] = useState(false);
   // Bumped to tear down and rebuild the room channel after it drops.
   const [reconnectNonce, setReconnectNonce] = useState(0);
   const reconnectAttemptRef = useRef(0);
@@ -553,6 +567,7 @@ export const useTicketPointing = (
     // mistaken for a dropped connection.
     let disposed = false;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let handshakeTimer: ReturnType<typeof setTimeout> | null = null;
 
     // Rebuild the channel after a backoff. Idempotent: several failure
     // statuses can arrive for one drop.
@@ -570,6 +585,7 @@ export const useTicketPointing = (
     channelRef.current = channel;
     setConnectionState("connecting");
     setPresenceReady(false);
+    setHandshakeReady(false);
     rpsGameRef.current = null;
     setRpsGame(null);
 
@@ -656,6 +672,9 @@ export const useTicketPointing = (
       if (payload.target && payload.target !== clientId) {
         return;
       }
+      if (payload.target === clientId) {
+        setHandshakeReady(true);
+      }
 
       const incomingRoundId =
         typeof payload.roundId === "string" ? payload.roundId : null;
@@ -723,6 +742,10 @@ export const useTicketPointing = (
           event: "state-request",
           payload: { requesterId: clientId },
         });
+        handshakeTimer = setTimeout(
+          () => setHandshakeReady(true),
+          HANDSHAKE_TIMEOUT_MS,
+        );
       }
 
       if (status === "CHANNEL_ERROR") {
@@ -745,6 +768,9 @@ export const useTicketPointing = (
       disposed = true;
       if (reconnectTimer) {
         clearTimeout(reconnectTimer);
+      }
+      if (handshakeTimer) {
+        clearTimeout(handshakeTimer);
       }
       channel.unsubscribe();
       supabase.removeChannel(channel);
@@ -885,7 +911,14 @@ export const useTicketPointing = (
   // Prefill + auto-rejoin using the identity this browser last used in the room.
   // Waits until presence has synced so we don't steal a name someone else holds.
   useEffect(() => {
-    if (selectedName || connectionState !== "connected" || !presenceReady) {
+    // Wait for the handshake so the room's round is adopted first: restoring
+    // a saved vote only works when the stored round matches the current one.
+    if (
+      selectedName ||
+      connectionState !== "connected" ||
+      !presenceReady ||
+      !handshakeReady
+    ) {
       return;
     }
 
@@ -940,6 +973,7 @@ export const useTicketPointing = (
   }, [
     connectionState,
     presenceReady,
+    handshakeReady,
     roomCode,
     presenceByClientId,
     selectedName,

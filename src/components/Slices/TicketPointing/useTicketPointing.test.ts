@@ -475,11 +475,55 @@ describe("useTicketPointing", () => {
     act(() => {
       channel.emit("presence", "sync");
     });
+    // An empty room never answers the handshake; the timeout lets us carry on
+    expect(result.current.isJoined).toBe(false);
+
+    await waitFor(
+      () => {
+        expect(result.current.selectedName).toBe("Ayse");
+        expect(result.current.selectedColor).toBe("Cyan");
+        expect(result.current.isJoined).toBe(true);
+      },
+      { timeout: 3000 },
+    );
+  });
+
+  it("restores a saved vote after rejoining, once the handshake adopts the room's round", async () => {
+    const round = "00000001.000000000000100.abc";
+    window.localStorage.setItem(
+      "ticket-pointing:room-identity",
+      JSON.stringify({
+        "default-room": {
+          name: "Ayse",
+          color: "Cyan",
+          selectedValue: 8,
+          roundId: round,
+        },
+      }),
+    );
+
+    const clientId = "me";
+    window.sessionStorage.setItem("ticket-pointing:client-id", clientId);
+    const { result, channel } = await mountConnected();
+
+    channel.presenceState.mockReturnValue({});
+    act(() => {
+      channel.emit("presence", "sync");
+    });
+    expect(result.current.isJoined).toBe(false);
+
+    // A peer answers the handshake with the room's current round
+    act(() => {
+      channel.emit("broadcast", "state-sync", {
+        roundId: round,
+        revealed: false,
+        target: clientId,
+      });
+    });
 
     await waitFor(() => {
-      expect(result.current.selectedName).toBe("Ayse");
-      expect(result.current.selectedColor).toBe("Cyan");
       expect(result.current.isJoined).toBe(true);
+      expect(result.current.selectedValue).toBe(8);
     });
   });
 
